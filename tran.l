@@ -31,6 +31,9 @@ int yywrap(void)
 \<   { letters += yyleng; yylval.node = createNormalNode(LESS, 0); return LESS; }
 \>\= { letters += yyleng; yylval.node = createNormalNode(GEQ, 0); return GEQ; }
 \<\= { letters += yyleng; yylval.node = createNormalNode(LEQ, 0); return LEQ; }
+\&\& { letters += yyleng; yylval.node = createNormalNode(AND, 0); return AND; }
+\|\| { letters += yyleng; yylval.node = createNormalNode(OR, 0); return OR; }
+\!   { letters += yyleng; yylval.node = createNormalNode(NOT, 0); return NOT; }
 func      { letters += yyleng; yylval.node = createNormalNode(FUNC, 0); return FUNC; }
 endfunc   { letters += yyleng; yylval.node = createNormalNode(ENDFUNC, 0); return ENDFUNC; }
 if        { letters += yyleng; yylval.node = createNormalNode(IF, 0); return IF; }
@@ -50,6 +53,8 @@ private   { letters += yyleng; yylval.node = createNormalNode(PRIVATE, 0); retur
 protected { letters += yyleng; yylval.node = createNormalNode(PROTECTED, 0); return PROTECTED; }
 public    { letters += yyleng; yylval.node = createNormalNode(PUBLIC, 0); return PUBLIC; }
 this      { letters += yyleng; yylval.node = createNormalNode(THIS, 0); return THIS; }
+ctor      { letters += yyleng; yylval.node = createNormalNode(CTOR, 0); return CTOR; }
+endctor   { letters += yyleng; yylval.node = createNormalNode(ENDCTOR, 0); return ENDCTOR; }
 \<\<\<    { letters += yyleng; yylval.node = createNormalNode(INHERIT, 0); return INHERIT; }
 -?[0-9]+                 { letters += yyleng; yylval.node = createIntNode(INT_LITERAL, atoi(yytext), 0); return INT_LITERAL; }
 -?[0-9]+(\.[0-9]+)?      { letters += yyleng; yylval.node = createDoubleNode(DOUBLE_LITERAL, atof(yytext), 0); return DOUBLE_LITERAL; }

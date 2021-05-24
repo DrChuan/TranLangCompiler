@@ -166,11 +166,16 @@ int isEmpty(NodeQueue *queue)
     return queue->front == queue->rear;
 }
 
-char *non_terminals[] = {"start", "program", "function", "type", "para_list", "declaration", "statements", "statement", "dcl_statement", "if_statement", "loop_statement", "exp_statement", "initialize", "exp", "while_loop", "else_part", "literal", "return_statement", "func_call", "args", "lexp", "class_def", "class_items", "class_item", "access"};
-char *terminals[] = {"FUNC", "ENDFUNC", "ID", "INT", "DOUBLE", "STRING", "VOID", "EPSILON", "SEMI", "INIT", "IF", "ENDIF", "ELSE", "ELSIF", "WHILE", "ENDWHILE", "INT_LITERAL", "DOUBLE_LITERAL", "STRING_LITERAL", "RETURN", "CLASS", "ENDCLASS", "PRIVATE", "PUBLIC", "PROTECTED", "INHERIT", "THIS", "COMMA", "ASSIGN", "EQUAL", "NEQ", "GEQ", "LEQ", "GREATER", "LESS", "ADD", "SUB", "MUL", "DIV", "MOD", "LP", "RP", "LB", "RB"};
+char *non_terminals[] = {"start", "program", "function", "type", "para_list", "para", "declaration", "statements", "statement", "dcl_statement", 
+                         "if_statement", "loop_statement", "exp_statement", "initialize", "exp", "while_loop", "else_part", "literal", 
+                         "return_statement", "func_call", "args", "lexp", "class_def", "class_items", "class_item", "access", "ctor_def"};
+char *terminals[] = {"FUNC", "ENDFUNC", "ID", "INT", "DOUBLE", "STRING", "VOID", "EPSILON", "SEMI", "INIT", "IF", "ENDIF", "ELSE", "ELSIF", 
+                     "WHILE", "ENDWHILE", "INT_LITERAL", "DOUBLE_LITERAL", "STRING_LITERAL", "RETURN", "CLASS", "ENDCLASS", "PRIVATE", 
+                     "PUBLIC", "PROTECTED", "INHERIT", "THIS", "CTOR", "ENDCTOR", "COMMA", "ASSIGN", "AND", "OR", "EQUAL", "NEQ", "GEQ", 
+                     "LEQ", "GREATER", "LESS", "ADD", "SUB", "MUL", "DIV", "MOD", "NOT", "LP", "RP", "LB", "RB"};
 int bias = 258;
 
-void printNode(ASTNode *node)
+void _printNode(ASTNode *node)
 {
     if (node == NULL)
         printf("NULL ");
@@ -195,7 +200,6 @@ void printLayerorder(ASTNode *root)
     printf("\n############### Syntax Tree ##################\n");
     NodeQueue *queue1 = createNodeQueue(1000);
     NodeQueue *queue2 = createNodeQueue(1000);
-    //ASTNode **curQueue = queue1;
     enqueue(queue1, root);
     ASTNode *t;
     while(!isEmpty(queue1) || !isEmpty(queue2))
@@ -203,7 +207,7 @@ void printLayerorder(ASTNode *root)
         while(!isEmpty(queue1))
         {
             t = dequeue(queue1);
-            printNode(t);
+            _printNode(t);
             if (t->child)
             {
                 ASTNode *p = t->child;
@@ -219,7 +223,7 @@ void printLayerorder(ASTNode *root)
         while(!isEmpty(queue2))
         {
             t = dequeue(queue2);
-            printNode(t);
+            _printNode(t);
             if (t->child)
             {
                 ASTNode *p = t->child;
@@ -233,5 +237,28 @@ void printLayerorder(ASTNode *root)
         }
         printf("\n");
     }
+    printf("############# Syntax Tree End ################\n\n");
+}
+
+void _printDirectory(ASTNode *node, int depth)
+{
+    if (node == NULL)
+        return;
+    for (int i = 0; i < depth; i++)
+        printf("- ");
+    _printNode(node);
+    printf("\n");
+    ASTNode *t = node->child;
+    while(t)
+    {
+        _printDirectory(t, depth + 1);
+        t = t->sibling;
+    }
+}
+
+void printDirectory(ASTNode *root)
+{
+    printf("\n############### Syntax Tree ##################\n");
+    _printDirectory(root, 0);
     printf("############# Syntax Tree End ################\n\n");
 }

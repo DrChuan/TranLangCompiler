@@ -32,6 +32,6 @@ int main()
     if (yyparse() == 0)
     {
         printf("Succ!\n");
-        printLayerorder(root);
+        printDirectory(root);
     }
 }
