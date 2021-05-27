@@ -1,26 +1,59 @@
-a.out: main.o y.tab.o lex.yy.o utility.o
-	cc -g main.o y.tab.o lex.yy.o utility.o
+LEX=lex  
+YACC=yacc
+CC=g++  
+OBJECT=main #生成的目标文件  
+  
+$(OBJECT): lex.yy.o y.tab.o main.o utility.o
+	$(CC) lex.yy.o y.tab.o main.o utility.o -o $(OBJECT)
 
-main.o: main.c utility.h
-	cc -g -c main.c
+main.o: main.cpp
+	$(CC) -c main.cpp
 
-y.tab.o: y.tab.c
-	cc -g -c y.tab.c
+utility.o: utility.cpp
+	$(CC) -c utility.cpp
 
-y.tab.c: tran.y
-	yacc -dv tran.y
+lex.yy.o: lex.yy.c y.tab.h utility.h
+	$(CC) -c lex.yy.c  
+  
+y.tab.o: y.tab.c utility.h
+	$(CC) -c y.tab.c  
+  
+y.tab.c: tran.y  
+# bison使用-d参数编译.y文件  
+	$(YACC) -d tran.y  
 
 y.tab.h: y.tab.c
 	echo "y.tab.h was created at the same time as y.tab.c"
+  
+lex.yy.c: tran.l  
+	$(LEX) tran.l  
+  
+clean:  
+	@rm -f $(OBJECT)  *.o  y.tab.* lex.yy.c
 
-lex.yy.o: lex.yy.c y.tab.h utility.h
-	cc -g -c lex.yy.c
+# a.out: main.o y.tab.o lex.yy.o utility.o
+# 	g++ -g main.o y.tab.o lex.yy.o utility.o
 
-lex.yy.c: tran.l
-	lex tran.l
+# main.o: main.cpp utility.h
+# 	g++ -g -c main.cpp
 
-utility.o: utility.c utility.h
-	cc -g -c utility.c
+# y.tab.o: y.tab.c
+# 	g++ -g -c y.tab.c
 
-clean: 
-	rm -f a.out utility.o main.o lex.yy.o y.tab.c y.tab.h y.tab.o y.output lex.yy.c
+# y.tab.c: tran.y
+# 	yacc -dv tran.y
+
+# y.tab.h: y.tab.c
+# 	echo "y.tab.h was created at the same time as y.tab.c"
+
+# lex.yy.o: lex.yy.c y.tab.h utility.h
+# 	g++ -g -c lex.yy.c
+
+# lex.yy.c: tran.l
+# 	lex tran.l
+
+# utility.o: utility.cpp utility.h
+# 	g++ -g -c utility.cpp
+
+# clean: 
+# 	rm -f a.out utility.o main.o lex.yy.o y.tab.c y.tab.h y.tab.o y.output lex.yy.c

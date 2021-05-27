@@ -1,13 +1,19 @@
 %{
-#include "y.tab.h"
 #include "utility.h"
+#include "y.tab.h"
 
 int lines = 1;
 int letters = 0;
 
-int yywrap(void)
+extern "C"
 {
+    int yywrap(void)
+    {
+        return 1;
+    }
+    int yylex(void);
 }
+
 %}
 
 %%

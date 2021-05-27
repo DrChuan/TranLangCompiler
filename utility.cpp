@@ -1,6 +1,50 @@
 #include "utility.h"
-#include <stdlib.h>
-#include <string.h>
+
+ASTNode::ASTNode(int symbol, vector<ASTNode*> children)
+{
+    this->symbol = symbol;
+    val.type = NOTHING;
+    for (int i = 0; i < children.size(); i++)
+        addChild(this, children[i]);
+}
+
+ASTNode::ASTNode(int symbol, int val, vector<ASTNode*> children)
+{
+    this->symbol = symbol;
+    this->val.type = ValueType::INT_L;
+    this->val.val.ival = val;
+    for (int i = 0; i < children.size(); i++)
+        addChild(this, children[i]);
+}
+
+ASTNode::ASTNode(int symbol, double val, vector<ASTNode*> children)
+{
+    this->symbol = symbol;
+    this->val.type = ValueType::DOUBLE_L;
+    this->val.val.dval = val;
+    for (int i = 0; i < children.size(); i++)
+        addChild(this, children[i]);
+}
+
+ASTNode::ASTNode(int symbol, string val, vector<ASTNode*> children, bool isID)
+{
+    this->symbol = symbol;
+    this->val.type = (isID ? ValueType::IDENTIFIER : ValueType::STRING_L);
+    this->val.val.sval = (isID ? val : val.substr(1, val.size() - 1));
+    for (int i = 0; i < children.size(); i++)
+        addChild(this, children[i]);
+}
+
+vector<ASTNode *> generateVector(int n, ...)
+{
+    vector<ASTNode *> ret(n);
+    va_list pArgs;
+    va_start(pArgs, n);
+    for (int i = 0; i < n; i++)
+        ret[i] = va_arg(pArgs, ASTNode *);
+    va_end(pArgs);
+    return ret;
+}
 
 ASTNode *createNode()
 {
@@ -55,12 +99,12 @@ ASTNode *createDoubleNode(int symbol, double val, int nChild, ...)
     return ret;
 }
 
-ASTNode *createStringNode(int symbol, char* val, int nChild, ...)
+ASTNode *createStringNode(int symbol, string val, int nChild, ...)
 {
     ASTNode *ret = createNormalNode(symbol, 0);
-    ret->val.val.sval = (char *)malloc(sizeof(char) * (strlen(val) + 1));
-    val[strlen(val)-1] = 0;
-    strcpy(ret->val.val.sval, val + 1);
+    //ret->val.val.sval = (char *)malloc(sizeof(char) * (strlen(val) + 1));
+    //val[strlen(val)-1] = 0;
+    ret->val.val.sval = val.substr(1, val.size() - 1);
     ret->val.type = STRING_L;
     va_list pArgs;
     va_start(pArgs, nChild);
@@ -72,11 +116,12 @@ ASTNode *createStringNode(int symbol, char* val, int nChild, ...)
     return ret;
 }
 
-ASTNode *createIDNode(int symbol, char* val, int nChild, ...)
+ASTNode *createIDNode(int symbol, string val, int nChild, ...)
 {
     ASTNode *ret = createNormalNode(symbol, 0);
-    ret->val.val.sval = (char *)malloc(sizeof(char) * (strlen(val) + 1));
-    strcpy(ret->val.val.sval, val);
+    //ret->val.val.sval = (char *)malloc(sizeof(char) * (strlen(val) + 1));
+    // strcpy(ret->val.val.sval, val);
+    ret->val.val.sval = val;
     ret->val.type = IDENTIFIER;
     va_list pArgs;
     va_start(pArgs, nChild);
@@ -166,10 +211,10 @@ int isEmpty(NodeQueue *queue)
     return queue->front == queue->rear;
 }
 
-char *non_terminals[] = {"start", "program", "function", "type", "para_list", "para", "declaration", "statements", "statement", "dcl_statement", 
+string non_terminals[] = {"start", "program", "function", "type", "para_list", "para", "declaration", "statements", "statement", "dcl_statement", 
                          "if_statement", "loop_statement", "exp_statement", "initialize", "exp", "while_loop", "else_part", "literal", 
                          "return_statement", "func_call", "args", "lexp", "class_def", "class_items", "class_item", "access", "ctor_def"};
-char *terminals[] = {"FUNC", "ENDFUNC", "ID", "INT", "DOUBLE", "STRING", "VOID", "EPSILON", "SEMI", "INIT", "IF", "ENDIF", "ELSE", "ELSIF", 
+string terminals[] = {"FUNC", "ENDFUNC", "ID", "INT", "DOUBLE", "STRING", "VOID", "EPSILON", "SEMI", "INIT", "IF", "ENDIF", "ELSE", "ELSIF", 
                      "WHILE", "ENDWHILE", "INT_LITERAL", "DOUBLE_LITERAL", "STRING_LITERAL", "RETURN", "CLASS", "ENDCLASS", "PRIVATE", 
                      "PUBLIC", "PROTECTED", "INHERIT", "THIS", "CTOR", "ENDCTOR", "COMMA", "ASSIGN", "AND", "OR", "EQUAL", "NEQ", "GEQ", 
                      "LEQ", "GREATER", "LESS", "ADD", "SUB", "MUL", "DIV", "MOD", "NOT", "LP", "RP", "LB", "RB"};
@@ -182,17 +227,17 @@ void _printNode(ASTNode *node)
     else if (node->symbol == -1)
         printf(" | ");
     else if (node->child == NULL){
-        printf("$%s", terminals[node->symbol - bias]);
+        cout << "$" << terminals[node->symbol - bias];
         if (node->val.type == INT_L)
             printf("(%d)", node->val.val.ival);
         else if (node->val.type == DOUBLE_L)
             printf("(%lf)", node->val.val.dval);
         else if (node->val.type == STRING_L || node->val.type == IDENTIFIER)
-            printf("(%s)", node->val.val.sval);
+            cout << "(" << node->val.val.sval << ")";
         printf(" ");
     }
     else
-        printf("%s ", non_terminals[node->symbol]);
+        cout << non_terminals[node->symbol];
 }
 
 void printLayerorder(ASTNode *root)
