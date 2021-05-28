@@ -3,20 +3,23 @@ YACC=yacc
 CC=g++  
 OBJECT=main #生成的目标文件  
   
-$(OBJECT): lex.yy.o y.tab.o main.o utility.o
-	$(CC) lex.yy.o y.tab.o main.o utility.o -o $(OBJECT)
+$(OBJECT): lex.yy.o y.tab.o main.o utility.o AST.o
+	$(CC) lex.yy.o y.tab.o main.o utility.o AST.o -o $(OBJECT) -g
 
 main.o: main.cpp
-	$(CC) -c main.cpp
+	$(CC) -c main.cpp -g
+
+AST.o: AST.cpp
+	$(CC) -c AST.cpp -g
 
 utility.o: utility.cpp
-	$(CC) -c utility.cpp
+	$(CC) -c utility.cpp -g
 
-lex.yy.o: lex.yy.c y.tab.h utility.h
-	$(CC) -c lex.yy.c  
+lex.yy.o: lex.yy.c y.tab.h utility.h AST.h
+	$(CC) -c lex.yy.c  -g
   
-y.tab.o: y.tab.c utility.h
-	$(CC) -c y.tab.c  
+y.tab.o: y.tab.c utility.h AST.h
+	$(CC) -c y.tab.c  -g
   
 y.tab.c: tran.y  
 # bison使用-d参数编译.y文件  

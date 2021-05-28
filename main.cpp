@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "utility.h"
+#include "AST.h"
 
 extern FILE* yyin;
 int yyparse();
