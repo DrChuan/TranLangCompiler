@@ -1,8 +1,9 @@
 %{
 #include <stdio.h>
 #include "utility.h"
+#include "AST.h"
 
-ASTNode *root;
+AST tree;
 
 extern int lines;
 extern int letters;
@@ -13,7 +14,7 @@ extern "C"
     {
         printf("%d-%d : %s", lines, letters, s);
     }
-    extern int yylex(void);//该函数是在lex.yy.c里定义的，yyparse()里要调用该函数，为了能编译和链接，必须用extern加以声明  
+    extern int yylex(void);
 }
 
 enum {
@@ -25,9 +26,6 @@ enum {
 
 %}
 
-// %union {
-//     ASTNode *node;
-// }
 
 %type<node> start program function type para_list para declaration statements statement dcl_statement if_statement loop_statement exp_statement initialize exp while_loop else_part literal return_statement func_call args lexp class_def class_items class_item access ctor_def
 %token<node> FUNC ENDFUNC ID INT DOUBLE STRING VOID EPSILON SEMI INIT IF ENDIF ELSE ELSIF WHILE ENDWHILE INT_LITERAL DOUBLE_LITERAL STRING_LITERAL RETURN CLASS ENDCLASS PRIVATE PUBLIC PROTECTED INHERIT THIS CTOR ENDCTOR
@@ -41,7 +39,7 @@ enum {
 %left<node> LP RP LB RB
 
 %%
-start : program { $$ = new ASTNode(start, generateVector(1, $1)); root = $$; };
+start : program { $$ = new ASTNode(start, generateVector(1, $1)); tree = AST($$); };
 program : function program  { $$ = new ASTNode(program, generateVector(2, $1, $2)); }
         | class_def program { $$ = new ASTNode(program, generateVector(2, $1, $2)); }
         |                   { $$ = NULL; }
@@ -122,7 +120,7 @@ while_loop : WHILE LP exp RP statements ENDWHILE { $$ = new ASTNode(while_loop, 
            ;
 exp_statement : exp { $$ = new ASTNode(exp_statement, generateVector(1, $1)); }
               ;
-return_statement : RETURN exp { $$ = new ASTNode(return_statement, generateVector(1, $1)); }
+return_statement : RETURN exp { $$ = new ASTNode(return_statement, generateVector(1, $2)); }
                  | RETURN     { $$ = new ASTNode(return_statement, generateVector(0)); }
                  ;
 class_def : CLASS ID class_items ENDCLASS { $$ = new ASTNode(class_def, generateVector(2, $2, $3)); }

@@ -4,7 +4,7 @@
 extern FILE* yyin;
 int yyparse();
 
-extern ASTNode *root;
+extern AST tree;
 
 int main()
 {
@@ -32,6 +32,6 @@ int main()
     if (yyparse() == 0)
     {
         printf("Succ!\n");
-        printDirectory(root);
+        tree.printDirectory();
     }
 }
