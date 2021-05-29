@@ -17,17 +17,11 @@ extern "C"
     extern int yylex(void);
 }
 
-enum {
-    start, program, function, type, para_list, para, declaration, statements, statement, dcl_statement, if_statement, loop_statement, 
-    exp_statement, initialize, exp, while_loop, else_part, literal, return_statement, func_call, args, lexp, class_def, class_items, 
-    class_item, access, ctor_def
-};
-
 
 %}
 
 
-%type<node> start program function type para_list para declaration statements statement dcl_statement if_statement loop_statement exp_statement initialize exp while_loop else_part literal return_statement func_call args lexp class_def class_items class_item access ctor_def
+%type<node> start program function type para_list para declaration statements statement dcl_statement if_statement loop_statement exp_statement initialize exp while_loop else_part literal return_statement func_call args lexp class_def class_items class_item access_lv ctor_def
 %token<node> FUNC ENDFUNC ID INT DOUBLE STRING VOID EPSILON SEMI INIT IF ENDIF ELSE ELSIF WHILE ENDWHILE INT_LITERAL DOUBLE_LITERAL STRING_LITERAL RETURN CLASS ENDCLASS PRIVATE PUBLIC PROTECTED INHERIT THIS CTOR ENDCTOR
 %left<node> COMMA
 %right<node> ASSIGN
@@ -39,12 +33,12 @@ enum {
 %left<node> LP RP LB RB
 
 %%
-start : program { $$ = new ASTNode(start, generateVector(1, $1)); tree = AST($$); };
+start : program { $$ = (new ASTNode(start, generateVector(1, $1)))->simplify(); tree = AST($$); };
 program : function program  { $$ = new ASTNode(program, generateVector(2, $1, $2)); }
         | class_def program { $$ = new ASTNode(program, generateVector(2, $1, $2)); }
         |                   { $$ = NULL; }
         ;
-function : FUNC type ID LP para_list RP statements ENDFUNC { $$ = new ASTNode(function, generateVector(4, $2, $3, $5, $7)); }
+function : FUNC type ID LP para_list RP statements ENDFUNC { $$ = (new ASTNode(function, generateVector(4, $2, $3, $5, $7)))->simplify(); }
         ;
 type : INT    { $$ = new ASTNode(type, generateVector(1, $1)); }
      | DOUBLE { $$ = new ASTNode(type, generateVector(1, $1)); }
@@ -68,7 +62,7 @@ statements : statement statements { $$ = new ASTNode(statements, generateVector(
 statement : dcl_statement SEMI    { $$ = new ASTNode(statement, generateVector(1, $1)); }
           | if_statement          { $$ = new ASTNode(statement, generateVector(1, $1)); }
           | loop_statement        { $$ = new ASTNode(statement, generateVector(1, $1)); }
-          | exp_statement SEMI    { $$ = new ASTNode(statement, generateVector(1, $1)); }
+          | exp_statement SEMI    { $$ = new ASTNode( statement, generateVector(1, $1)); }
           | return_statement SEMI { $$ = new ASTNode(statement, generateVector(1, $1)); }
           ;
 dcl_statement : declaration initialize { $$ = new ASTNode(dcl_statement, generateVector(2, $1, $2)); }
@@ -108,15 +102,15 @@ literal : INT_LITERAL    { $$ = new ASTNode(literal, generateVector(1, $1)); $$-
         | DOUBLE_LITERAL { $$ = new ASTNode(literal, generateVector(1, $1)); $$->val.type = $1->val.type; }
         | STRING_LITERAL { $$ = new ASTNode(literal, generateVector(1, $1)); $$->val.type = $1->val.type; }
         ;
-if_statement : IF LP exp RP statements else_part ENDIF { $$ = new ASTNode(if_statement, generateVector(3, $3, $5, $6)); }
+if_statement : IF LP exp RP statements else_part ENDIF { $$ = (new ASTNode(if_statement, generateVector(3, $3, $5, $6)))->simplify(); }
              ;
-else_part : ELSIF LP exp RP statements else_part { $$ = new ASTNode(else_part, generateVector(3, $3, $5, $6)); }
-          | ELSE statements                      { $$ = new ASTNode(else_part, generateVector(1, $2)); }
+else_part : ELSIF LP exp RP statements else_part { $$ = (new ASTNode(else_part, generateVector(3, $3, $5, $6)))->simplify(); }
+          | ELSE statements                      { $$ = (new ASTNode(else_part, generateVector(1, $2)))->simplify(); }
           |                                      { $$ = NULL; }
           ;
 loop_statement : while_loop { $$ = new ASTNode(loop_statement, generateVector(1, $1)); }
                ;
-while_loop : WHILE LP exp RP statements ENDWHILE { $$ = new ASTNode(while_loop, generateVector(2, $3, $5)); }
+while_loop : WHILE LP exp RP statements ENDWHILE { $$ = (new ASTNode(while_loop, generateVector(2, $3, $5)))->simplify(); }
            ;
 exp_statement : exp { $$ = new ASTNode(exp_statement, generateVector(1, $1)); }
               ;
@@ -129,13 +123,13 @@ class_def : CLASS ID class_items ENDCLASS { $$ = new ASTNode(class_def, generate
 class_items : class_item class_items { $$ = new ASTNode(class_items, generateVector(2, $1, $2)); }
             |                        { $$ = NULL; }
             ;
-class_item : access declaration SEMI { $$ = new ASTNode(class_item, generateVector(2, $1, $2)); }
-           | access function { $$ = new ASTNode(class_item, generateVector(2, $1, $2)); }
-           | access ctor_def { $$ = new ASTNode(class_item, generateVector(2, $1, $2)); }
+class_item : access_lv declaration SEMI { $$ = new ASTNode(class_item, generateVector(2, $1, $2)); }
+           | access_lv function { $$ = new ASTNode(class_item, generateVector(2, $1, $2)); }
+           | access_lv ctor_def { $$ = new ASTNode(class_item, generateVector(2, $1, $2)); }
            ;
-access : PUBLIC { $$ = new ASTNode(access, generateVector(1, $1)); }
-       | PRIVATE { $$ = new ASTNode(access, generateVector(1, $1)); }
-       | PROTECTED { $$ = new ASTNode(access, generateVector(1, $1)); }
-       ;
-ctor_def : CTOR LP para_list RP statements ENDCTOR { $$ = new ASTNode(ctor_def, generateVector(2, $3, $5)); }
+access_lv : PUBLIC { $$ = new ASTNode(access_lv, generateVector(1, $1)); }
+          | PRIVATE { $$ = new ASTNode(access_lv, generateVector(1, $1)); }
+          | PROTECTED { $$ = new ASTNode(access_lv, generateVector(1, $1)); }
+          ;
+ctor_def : CTOR LP para_list RP statements ENDCTOR { $$ = (new ASTNode(ctor_def, generateVector(2, $3, $5)))->simplify(); }
          ;

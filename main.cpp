@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "utility.h"
 #include "AST.h"
+#include "TreeScanner.h"
+
 
 extern FILE* yyin;
 int yyparse();
@@ -30,9 +32,9 @@ int main()
 
     yyin = fopen("test.t", "r");
     printf("start parsing\n");
-    if (yyparse() == 0)
-    {
-        printf("Succ!\n");
-        tree.printDirectory();
-    }
+    if (yyparse() != 0)
+        return 0;
+    printf("Success!\n");
+    tree.printDirectory();
+    SymbolTable *symbolTable = TreeScanner::getScanner().firstScan(tree);
 }

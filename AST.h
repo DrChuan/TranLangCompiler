@@ -22,6 +22,7 @@ public:
     ASTNode(int symbol, double val, vector<ASTNode*> children);
     ASTNode(int symbol, string val, vector<ASTNode*> children, bool isID=false);
     void printDirectory(int depth);
+    ASTNode *simplify();
     int symbol;
     Value val;
     ASTNode* child;
@@ -31,6 +32,7 @@ private:
     static const string terminals[];
     static const int bias = 258;
     void print();
+    void merge();
     void addChild(ASTNode *child);
 };
 
@@ -40,6 +42,7 @@ public:
     AST() {}
     AST(ASTNode *root) : root(root) {}
     void printDirectory();
+    ASTNode *getRoot() const { return root; }
 private:
     ASTNode *root;
 };

@@ -5,6 +5,13 @@
 #include <string>
 
 using std::string;
+using std::cout;
+
+enum {
+    start, program, function, type, para_list, para, declaration, statements, statement, dcl_statement, if_statement, loop_statement, 
+    exp_statement, initialize, exp, while_loop, else_part, literal, return_statement, func_call, args, lexp, class_def, class_items, 
+    class_item, access_lv, ctor_def
+};
 
 // enum ValueType
 // 结点中储存的值的类型。包括整形字面量、双精度浮点字面量、字符串字面量、标识符，以及没有值

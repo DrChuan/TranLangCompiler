@@ -58,50 +58,28 @@ void ASTNode::addChild(ASTNode *child)
     p->sibling = child;
 }
 
-// void AST::printLayerorder(ASTNode *root)
-// {
-//     printf("\n############### Syntax Tree ##################\n");
-//     NodeQueue *queue1 = createNodeQueue(1000);
-//     NodeQueue *queue2 = createNodeQueue(1000);
-//     enqueue(queue1, root);
-//     ASTNode *t;
-//     while(!isEmpty(queue1) || !isEmpty(queue2))
-//     {
-//         while(!isEmpty(queue1))
-//         {
-//             t = dequeue(queue1);
-//             _printNode(t);
-//             if (t->child)
-//             {
-//                 ASTNode *p = t->child;
-//                 while(p)
-//                 {
-//                     enqueue(queue2, p);
-//                     p = p->sibling;
-//                 }
-//                 enqueue(queue2, new ASTNode(-1));
-//             }
-//         }
-//         printf("\n");
-//         while(!isEmpty(queue2))
-//         {
-//             t = dequeue(queue2);
-//             _printNode(t);
-//             if (t->child)
-//             {
-//                 ASTNode *p = t->child;
-//                 while(p)
-//                 {
-//                     enqueue(queue1, p);
-//                     p = p->sibling;
-//                 }
-//                 enqueue(queue1, new ASTNode(-1));
-//             }
-//         }
-//         printf("\n");
-//     }
-//     printf("############# Syntax Tree End ################\n\n");
-// }
+void ASTNode::merge()
+{
+    ASTNode *p = child->sibling;
+    ASTNode *q = child;
+    while(p != nullptr)
+    {
+        q->sibling = p->child;
+        q = q->sibling;
+        delete p;
+        p = q->sibling;
+    }
+
+}
+
+ASTNode *ASTNode::simplify()
+{
+    ASTNode *t = child;
+    for (; t != nullptr; t = t->sibling)
+        if (t->symbol == program || t->symbol == statements || t->symbol == para_list || t->symbol == args)
+            t->merge();
+    return this;
+}
 
 void ASTNode::print()
 {
