@@ -8,12 +8,15 @@ const string ASTNode::terminals[] = {"FUNC", "ENDFUNC", "ID", "INT", "DOUBLE", "
                         "PUBLIC", "PROTECTED", "INHERIT", "THIS", "CTOR", "ENDCTOR", "COMMA", "ASSIGN", "AND", "OR", "EQUAL", "NEQ", "GEQ", 
                         "LEQ", "GREATER", "LESS", "ADD", "SUB", "MUL", "DIV", "MOD", "NOT", "LP", "RP", "LB", "RB"};
 
-ASTNode::ASTNode(int symbol) : child(nullptr) { this->symbol = symbol; val.type = NOTHING; }
+ASTNode::ASTNode(int symbol) : m_children(vector<ASTNode*>(0)) { this->symbol = symbol; val.type = NOTHING; }
 
-ASTNode::ASTNode(int symbol, vector<ASTNode*> children) : ASTNode(symbol)
+ASTNode::ASTNode(int symbol, vector<ASTNode*> children) : m_children(children)
 {
-    for (int i = 0; i < children.size(); i++)
-        addChild(children[i]);
+    cout << children.size();
+    // for (int i = 0; i < children.size(); i++)
+    //     addChild(children[i]);
+    this->symbol = symbol;
+    val.type = NOTHING;
 }
 
 ASTNode::ASTNode(int symbol, int val, vector<ASTNode*> children) : ASTNode(symbol, children)
@@ -45,40 +48,58 @@ vector<ASTNode *> generateVector(int n, ...)
     return ret;
 }
 
-void ASTNode::addChild(ASTNode *child)
-{
-    if (this->child == nullptr)
-    {
-        this->child = child;
-        return;
-    }
-    ASTNode *p = this->child;
-    while(p->sibling)
-        p = p->sibling;
-    p->sibling = child;
-}
+// void ASTNode::addChild(ASTNode *child)
+// {
+//     if (this->child == nullptr)
+//     {
+//         this->child = child;
+//         return;
+//     }
+//     ASTNode *p = this->child;
+//     while(p->sibling)
+//         p = p->sibling;
+//     p->sibling = child;
+// }
 
 void ASTNode::merge()
 {
-    ASTNode *p = child->sibling;
-    ASTNode *q = child;
-    while(p != nullptr)
-    {
-        q->sibling = p->child;
-        q = q->sibling;
-        delete p;
-        p = q->sibling;
-    }
-
+    // ASTNode *p = child->sibling;
+    // ASTNode *q = child;
+    // while(p != nullptr)
+    // {
+    //     q->sibling = p->child;
+    //     q = q->sibling;
+    //     delete p;
+    //     p = q->sibling;
+    // }
 }
 
 ASTNode *ASTNode::simplify()
 {
-    ASTNode *t = child;
-    for (; t != nullptr; t = t->sibling)
-        if (t->symbol == program || t->symbol == statements || t->symbol == para_list || t->symbol == args)
-            t->merge();
+    // ASTNode *t = child;
+    // for (; t != nullptr; t = t->sibling)
+    //     if (t->symbol == program || t->symbol == statements || t->symbol == para_list || t->symbol == args)
+    //         t->merge();
+    // return this;
     return this;
+}
+
+ASTNode *ASTNode::getChild(int id) const
+{
+    return m_children[id];
+    // ASTNode *t = child;
+    // for (int i = 0; i < id; i++)
+    // {
+    //     if (t = nullptr)
+    //         break;
+    //     t = t->sibling;
+    // }
+    // return t;
+}
+
+int ASTNode::childCount() const
+{
+    return m_children.size();
 }
 
 void ASTNode::print()
@@ -103,14 +124,17 @@ void ASTNode::printDirectory(int depth)
 {
     for (int i = 0; i < depth; i++)
         printf("- ");
+    cout << m_children.size();
     print();
     printf("\n");
-    ASTNode *t = child;
-    while(t)
-    {
-        t->printDirectory(depth + 1);
-        t = t->sibling;
-    }
+    for (int i = 0; i < m_children.size(); i++)
+        m_children[i]->printDirectory(depth + 1);
+    // ASTNode *t = child;
+    // while(t)
+    // {
+    //     t->printDirectory(depth + 1);
+    //     t = t->sibling;
+    // }
 }
 
 void AST::printDirectory()

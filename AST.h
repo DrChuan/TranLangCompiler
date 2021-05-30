@@ -23,17 +23,20 @@ public:
     ASTNode(int symbol, string val, vector<ASTNode*> children, bool isID=false);
     void printDirectory(int depth);
     ASTNode *simplify();
+    ASTNode *getChild(int id) const;
+    int childCount() const;
     int symbol;
     Value val;
-    ASTNode* child;
-    ASTNode* sibling;
+    // ASTNode* child;
+    // ASTNode* sibling;
 private:
     static const string non_terminals[];
     static const string terminals[];
     static const int bias = 258;
     void print();
     void merge();
-    void addChild(ASTNode *child);
+    // void addChild(ASTNode *child);
+    vector<ASTNode *> m_children;
 };
 
 class AST
