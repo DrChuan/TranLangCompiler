@@ -2,7 +2,7 @@
 #define __TREE_SCANNER__
 
 #include "utility.h"
-#include "SymbolTable.h"
+#include "SymbolTable/SymbolTable.h"
 #include "AST.h"
 
 // 单例类，用于对AST进行扫描分析

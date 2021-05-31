@@ -1,12 +1,8 @@
-#ifndef __SYMBOL_TABLE__
-#define __SYMBOL_TABLE__
+#ifndef __SYMBOL_TABLE_ITEM__
+#define __SYMBOL_TABLE_ITEM__
 
-#include <unordered_map>
-#include <string>
-#include "utility.h"
-#include "y.tab.h"
-using std::unordered_map;
-using std::string;
+#include "../utility.h"
+#include "../y.tab.h"
 
 enum SymbolType
 {
@@ -32,20 +28,6 @@ private:
     string refName;  // 对于用户自定义类型，保存其自定义类型名称
     int extraInfo;   // 对于函数类型，保存参数个数。对于class类型，保存类的字节数
     SymbolTable *tbPointer;
-};
-
-class SymbolTable
-{
-public:
-    SymbolTable() {}
-    bool insertItem(string name, SymbolTableItem item);
-    SymbolTableItem *getItem(string name);
-    bool deleteItem(string name);
-
-    void print();
-private:
-    unordered_map<string, SymbolTableItem> table;
-    void _print(int indent);
 };
 
 #endif
