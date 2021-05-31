@@ -3,7 +3,9 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
+using std::vector;
 using std::string;
 using std::cout;
 
@@ -19,19 +21,21 @@ enum ValueType{
     INT_L, DOUBLE_L, STRING_L, IDENTIFIER, NOTHING
 };
 
+union U {
+public:
+    U() { new (&sval) string; }
+    ~U() { sval.~string(); }
+    int ival;
+    double dval;
+    string sval;
+};
+
 // Value
 // 结点中的值，包括一个union和一个指示union中类型的枚举量
 class Value {
 public:
     Value() {}
-    union U {
-    public:
-        U() { new (&sval) string; }
-        ~U() { sval.~string(); }
-        int ival;
-        double dval;
-        string sval;
-    } val;
+    U val;
     ValueType type;
 };
 

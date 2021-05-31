@@ -38,4 +38,6 @@ int main()
     tree.printDirectory();
     SymbolTable *symbolTable = TreeScanner::getScanner().firstScan(tree);
     symbolTable->print();
+    InterCodeList *interCodeList = TreeScanner::getScanner().secondScan(tree, *symbolTable);
+    interCodeList->print();
 }

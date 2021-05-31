@@ -36,7 +36,7 @@ void SymbolTable::print()
 {
     cout << "###############SymbolTable##################\n";
     _print(0);
-    cout << "###############SymbolTable End##############\n";
+    cout << "###############SymbolTable End##############\n\n";
 }
 
 void SymbolTable::_print(int indent)
