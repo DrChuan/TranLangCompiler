@@ -2,7 +2,6 @@
 
 TreeScanner *TreeScanner::scanner = nullptr;
 
-
 TreeScanner &TreeScanner::getScanner()
 {
     if (scanner == nullptr)
@@ -50,6 +49,7 @@ void TreeScanner::scanFunction(ASTNode *functionNode, SymbolTable &table)
     SymbolTable *subTable = new SymbolTable();  // 创建函数的子符号表
     table.insertItem(name, SymbolTableItem(0, type, paraNodes.size(), subTable));  // 将函数保存到总符号表中
     scanParas(paraNodes, *subTable);   // 将参数填入符号表
+    scanStmts(stmtNodes, *subTable);   // 将局部变量填入符号表
 }
 
 void TreeScanner::scanParas(const vector<ASTNode*> &paraNodes, SymbolTable &funcTable)
@@ -66,6 +66,47 @@ SymbolTableItem TreeScanner::scanPara(ASTNode *paraNode, int offset)
 {
     ASTNode *typeNode = paraNode->getChild(0);
     bool isArray = paraNode->getChild(1)->is(LB);
+    int type = createSymbolType(typeNode->getSymbol(), false, false, isArray);
+    return SymbolTableItem(offset, type);
+}
+
+void TreeScanner::_scanStmts(const vector<ASTNode*> &stmtNodes, SymbolTable &funcTable, int &offset)
+{
+    // 遍历所有statements
+    for (int i = 0; i < stmtNodes.size(); i++)
+    {
+        // 对于声明语句，将相应符号放入符号表
+        if (stmtNodes[i]->is(dcl_statement))
+        {
+            funcTable.insertItem(stmtNodes[i]->getChild(0)->getChild(1)->getStringValue(), scanPara(stmtNodes[i]->getChild(0), offset));
+            offset += 8;
+        }
+        // 对于条件语句或循环语句，对其statements部分递归调用
+        else if (stmtNodes[i]->is(if_statement) || stmtNodes[i]->is(while_loop))
+        {
+            _scanStmts(stmtNodes[i]->getChild(1)->getChildren(), funcTable, offset);
+        }
+        // 对于条件语句的else部分，根据子结点数目判断其为elsif块或else块，并对statements部分递归调用
+        else if (stmtNodes[i]->is(else_part))
+        {
+            if (stmtNodes[i]->childCount() == 1)
+                _scanStmts(stmtNodes[i]->getChild(0)->getChildren(), funcTable, offset);
+            else
+                _scanStmts(stmtNodes[i]->getChild(1)->getChildren(), funcTable, offset);
+        }
+    }
+}
+
+void TreeScanner::scanStmts(const vector<ASTNode*> &stmtNodes, SymbolTable &funcTable)
+{
+    int offset = 0;
+    _scanStmts(stmtNodes, funcTable, offset);
+}
+
+SymbolTableItem TreeScanner::scanDecl(ASTNode *declNode, int offset)
+{
+    ASTNode *typeNode = declNode->getChild(0);
+    bool isArray = declNode->childCount() == 3;
     int type = createSymbolType(typeNode->getSymbol(), false, false, isArray);
     return SymbolTableItem(offset, type);
 }

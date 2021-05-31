@@ -55,15 +55,16 @@ para : type ID { $$ = new ASTNode(para, generateVector(2, $1, $2)); }
      ;
 declaration : type ID                   { $$ = new ASTNode(declaration, generateVector(2, $1, $2)); }
             | type ID LB INT_LITERAL RB { $$ = new ASTNode(declaration, generateVector(3, $1, $2, $4)); }
+            | type ID LB ID RB { $$ = new ASTNode(declaration, generateVector(3, $1, $2, $4)); }
             ;
 statements : statement statements { $$ = new ASTNode(statements, generateVector(2, $1, $2)); }
            |                      { $$ = NULL; }
            ;
-statement : dcl_statement SEMI    { $$ = new ASTNode(statement, generateVector(1, $1)); }
-          | if_statement          { $$ = new ASTNode(statement, generateVector(1, $1)); }
-          | loop_statement        { $$ = new ASTNode(statement, generateVector(1, $1)); }
-          | exp_statement SEMI    { $$ = new ASTNode( statement, generateVector(1, $1)); }
-          | return_statement SEMI { $$ = new ASTNode(statement, generateVector(1, $1)); }
+statement : dcl_statement SEMI    { $$ = $1; }
+          | if_statement          { $$ = $1; }
+          | loop_statement        { $$ = $1; }
+          | exp_statement SEMI    { $$ = $1; }
+          | return_statement SEMI { $$ = $1; }
           ;
 dcl_statement : declaration initialize { $$ = new ASTNode(dcl_statement, generateVector(2, $1, $2)); }
               ;
@@ -108,7 +109,7 @@ else_part : ELSIF LP exp RP statements else_part { $$ = (new ASTNode(else_part, 
           | ELSE statements                      { $$ = (new ASTNode(else_part, generateVector(1, $2)))->simplify(); }
           |                                      { $$ = NULL; }
           ;
-loop_statement : while_loop { $$ = new ASTNode(loop_statement, generateVector(1, $1)); }
+loop_statement : while_loop { $$ = $1; }
                ;
 while_loop : WHILE LP exp RP statements ENDWHILE { $$ = (new ASTNode(while_loop, generateVector(2, $3, $5)))->simplify(); }
            ;
