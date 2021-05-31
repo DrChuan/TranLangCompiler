@@ -24,9 +24,16 @@ public:
     void printDirectory(int depth);
     ASTNode *simplify();
     ASTNode *getChild(int id) const;
+    const vector<ASTNode*> &getChildren() const;
+    ASTNode *getLastChild() const;
     int childCount() const;
-    int symbol;
-    Value val;
+    int getSymbol() const;
+    int getIntValue() const;
+    double getDoubleValue() const;
+    string getStringValue() const;
+    ValueType getNodeValueType() const;
+    bool is(int objSymbol) const;
+    void setType(ASTNode *src);
     // ASTNode* child;
     // ASTNode* sibling;
 private:
@@ -37,6 +44,8 @@ private:
     void merge();
     // void addChild(ASTNode *child);
     vector<ASTNode *> m_children;
+    int symbol;
+    Value val;
 };
 
 class AST

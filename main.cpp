@@ -37,4 +37,5 @@ int main()
     printf("Success!\n");
     tree.printDirectory();
     SymbolTable *symbolTable = TreeScanner::getScanner().firstScan(tree);
+    symbolTable->print();
 }

@@ -12,7 +12,7 @@ int createSymbolType(int type, bool isFunc, bool isClass, bool isArray)
     else if(type == ID)
         ret = SymbolType::USER_DEFINED_S;
     else if (type == VOID)
-        ret = isFunc ? SymbolType::ZERO : SymbolType::ERROR;
+        ret = isFunc ? SymbolType::VOID_S : SymbolType::ERROR;
     if (isFunc) ret |= SymbolType::FUNC_S;
     if (isClass) ret |= SymbolType::CLASS_S;
     if (isArray) ret |= SymbolType::ARRAY_S;
@@ -49,4 +49,33 @@ bool SymbolTable::deleteItem(string name)
     }
     table.erase(name);
     return true;
+}
+
+void SymbolTableItem::print(int indent)
+{
+    
+}
+
+SymbolTable *SymbolTableItem::getSubTable() const
+{
+    return tbPointer;
+}
+
+void SymbolTable::print()
+{
+    cout << "###############SymbolTable##################\n";
+    _print(0);
+    cout << "###############SymbolTable End##############\n";
+}
+
+void SymbolTable::_print(int indent)
+{
+    for (unordered_map<string, SymbolTableItem>::iterator i = table.begin(); i != table.end(); ++i)
+    {
+        for (int i = 0; i < indent; i++)
+            cout << " ";
+        cout << i->first << std::endl;
+        if (i->second.getSubTable())
+            i->second.getSubTable()->_print(indent + 2);
+    }
 }

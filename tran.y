@@ -48,7 +48,7 @@ type : INT    { $$ = new ASTNode(type, generateVector(1, $1)); }
      ;
 para_list : para COMMA para_list { $$ = new ASTNode(para_list, generateVector(2, $1, $3)); }
           | para                 { $$ = new ASTNode(para_list, generateVector(1, $1)); }
-          |                      { $$ = NULL; }
+          |                      { $$ = new ASTNode(para_list, generateVector(0)); }
           ;
 para : type ID { $$ = new ASTNode(para, generateVector(2, $1, $2)); }
      | type LB RB ID { $$ = new ASTNode(para, generateVector(3, $1, $2, $4)); }
@@ -90,7 +90,7 @@ exp : lexp ASSIGN exp { $$ = new ASTNode(exp, generateVector(3, $1, $2, $3)); }
     | NOT exp         { $$ = new ASTNode(exp, generateVector(2, $1, $2)); }
     | LP exp RP       { $$ = new ASTNode(exp, generateVector(1, $2)); }
     | lexp            { $$ = new ASTNode(exp, generateVector(1, $1)); }
-    | literal         { $$ = new ASTNode(exp, generateVector(1, $1)); $$->val.type = $1->val.type; }
+    | literal         { $$ = new ASTNode(exp, generateVector(1, $1)); $$->setType($1); }
     | func_call       { $$ = new ASTNode(exp, generateVector(1, $1)); }
     ;
 func_call : ID LP args RP { $$ = new ASTNode(func_call, generateVector(2, $1, $3)); }
@@ -98,9 +98,9 @@ args : exp COMMA args { $$ = new ASTNode(args, generateVector(2, $1, $3)); }
      | exp            { $$ = new ASTNode(args, generateVector(1, $1)); }
      |                { $$ = NULL; }
      ;
-literal : INT_LITERAL    { $$ = new ASTNode(literal, generateVector(1, $1)); $$->val.type = $1->val.type; }
-        | DOUBLE_LITERAL { $$ = new ASTNode(literal, generateVector(1, $1)); $$->val.type = $1->val.type; }
-        | STRING_LITERAL { $$ = new ASTNode(literal, generateVector(1, $1)); $$->val.type = $1->val.type; }
+literal : INT_LITERAL    { $$ = new ASTNode(literal, generateVector(1, $1)); $$->setType($1); }
+        | DOUBLE_LITERAL { $$ = new ASTNode(literal, generateVector(1, $1)); $$->setType($1); }
+        | STRING_LITERAL { $$ = new ASTNode(literal, generateVector(1, $1)); $$->setType($1); }
         ;
 if_statement : IF LP exp RP statements else_part ENDIF { $$ = (new ASTNode(if_statement, generateVector(3, $3, $5, $6)))->simplify(); }
              ;

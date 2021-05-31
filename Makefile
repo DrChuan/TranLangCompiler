@@ -3,8 +3,8 @@ YACC=yacc
 CC=g++  
 OBJECT=main #生成的目标文件  
   
-$(OBJECT): lex.yy.o y.tab.o main.o utility.o AST.o TreeScanner.o
-	$(CC) lex.yy.o y.tab.o main.o utility.o AST.o TreeScanner.o -o $(OBJECT) -g
+$(OBJECT): lex.yy.o y.tab.o main.o utility.o AST.o TreeScanner.o SymbolTable.o
+	$(CC) lex.yy.o y.tab.o main.o utility.o AST.o TreeScanner.o SymbolTable.o -o $(OBJECT) -g
 
 main.o: main.cpp
 	$(CC) -c main.cpp -g
