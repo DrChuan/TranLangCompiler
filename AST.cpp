@@ -45,6 +45,8 @@ vector<ASTNode *> generateVector(int n, ...)
     for (int i = 0; i < n; i++)
         ret[i] = va_arg(pArgs, ASTNode *);
     va_end(pArgs);
+    while(ret.size() != 0 && ret.back() == nullptr)
+        ret.pop_back();
     return ret;
 }
 
@@ -63,6 +65,19 @@ vector<ASTNode *> generateVector(int n, ...)
 
 void ASTNode::merge()
 {
+    if (m_children.size() < 2)
+        return;
+    ASTNode *q;
+    ASTNode *p = m_children[1];
+    m_children.pop_back();
+    while(p->m_children.size() == 2)
+    {
+        m_children.push_back(p->m_children[0]);
+        q = p;
+        p = p->m_children[1];
+        delete q;
+    }
+    m_children.push_back(p->m_children[0]);
     // ASTNode *p = child->sibling;
     // ASTNode *q = child;
     // while(p != nullptr)
@@ -77,29 +92,71 @@ void ASTNode::merge()
 ASTNode *ASTNode::simplify()
 {
     // ASTNode *t = child;
-    // for (; t != nullptr; t = t->sibling)
-    //     if (t->symbol == program || t->symbol == statements || t->symbol == para_list || t->symbol == args)
-    //         t->merge();
-    // return this;
+    for (int i = 0; i < m_children.size(); i++)
+    {
+        ASTNode *t = m_children[i];
+        if (!t) continue;
+        if (t->symbol == program || t->symbol == statements || t->symbol == para_list || t->symbol == args)
+            t->merge();
+    }
     return this;
 }
 
 ASTNode *ASTNode::getChild(int id) const
 {
     return m_children[id];
-    // ASTNode *t = child;
-    // for (int i = 0; i < id; i++)
-    // {
-    //     if (t = nullptr)
-    //         break;
-    //     t = t->sibling;
-    // }
-    // return t;
+}
+
+const vector<ASTNode*> &ASTNode::getChildren() const
+{
+    return m_children;
+}
+
+ASTNode *ASTNode::getLastChild() const
+{
+    if (m_children.size() == 0)
+        return nullptr;
+    return m_children[m_children.size() - 1];
 }
 
 int ASTNode::childCount() const
 {
     return m_children.size();
+}
+
+int ASTNode::getSymbol() const
+{
+    return symbol;
+}
+
+int ASTNode::getIntValue() const
+{
+    return val.val.ival;
+}
+
+double ASTNode::getDoubleValue() const
+{
+    return val.val.dval;
+}
+
+string ASTNode::getStringValue() const
+{
+    return val.val.sval;
+}
+
+ValueType ASTNode::getNodeValueType() const
+{
+    return val.type;
+}
+
+bool ASTNode::is(int objSymbol) const
+{
+    return symbol == objSymbol;
+}
+
+void ASTNode::setType(ASTNode *src)
+{
+    val.type = src->val.type;
 }
 
 void ASTNode::print()
@@ -122,13 +179,20 @@ void ASTNode::print()
 
 void ASTNode::printDirectory(int depth)
 {
-    for (int i = 0; i < depth; i++)
+     for (int i = 0; i < depth; i++)
         printf("- ");
     cout << m_children.size();
     print();
     printf("\n");
     for (int i = 0; i < m_children.size(); i++)
-        m_children[i]->printDirectory(depth + 1);
+        if (m_children[i])
+            m_children[i]->printDirectory(depth + 1);
+        else
+        {
+            for (int i = 0; i <= depth; i++)
+                printf("- ");
+            cout << "[nothing]\n";
+        }
     // ASTNode *t = child;
     // while(t)
     // {
