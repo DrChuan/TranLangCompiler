@@ -13,10 +13,16 @@ public:
     static TreeScanner &getScanner();    // 获取单例对象
     SymbolTable *firstScan(AST &tree);   // 构建符号表并返回
     InterCodeList *secondScan(AST &tree, SymbolTable &table);  // 生成中间代码
-
+    bool hasError() const { return errorMsgs.size() != 0; }
+    void printErrors() const;
 private:
     TreeScanner() {}
     static TreeScanner *scanner;
+
+    int while_cnt;
+    int br_cnt;
+
+    vector<string> errorMsgs;
     // 第一次扫描，创建符号表
     void _firstScan(ASTNode *node, SymbolTable &table);  // 执行实际的扫描和符号表构造动作
     void scanProgram_1(ASTNode *node, SymbolTable &table);  // 扫描program结点
@@ -31,6 +37,20 @@ private:
     void _secondScan(ASTNode *node, SymbolTable &table, InterCodeList *result);
     void scanProgram_2(ASTNode *node, SymbolTable &table, InterCodeList *result);
     void scanFunction_2(ASTNode *node, SymbolTable &table, InterCodeList *result);
+    void scanStmts_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    void scanDecl_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    void _scanExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    void scanAssignExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    void scan1Exp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    void scan2Exp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    void scanIndexExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    void scanExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    void scanWhile_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    void scanIf_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    void scanCallExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    void scanReturn_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    InterCodeOperand *terminalToOperand(ASTNode *node);  // 如果结点的孩子是变量名或字面量，则构造相应的中间代码操作数返回；否则返回nullptr
+    bool checkOperand(string id, bool isArray, SymbolTable &globalTable, SymbolTable &localTable);
 };
 
 #endif

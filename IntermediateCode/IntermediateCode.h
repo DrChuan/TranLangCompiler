@@ -2,6 +2,7 @@
 #define __INTERMEDIATE_CODE__
 
 #include "../utility.h"
+#include "../y.tab.h"
 
 enum InterCodeOperandType {
     I_LITERAL, D_LITERAL, S_LITERAL, TEMP, ORI_ID
@@ -13,8 +14,9 @@ public:
     static InterCodeOperand *createLiteral(int i);
     static InterCodeOperand *createLiteral(double d);
     static InterCodeOperand *createLiteral(string s);
-    static InterCodeOperand *createTemp();
+    static InterCodeOperand *createTemp(int id=-1);
     static InterCodeOperand *createVar(string varName);
+    static int getTempCount() { return tempCount; }
     void print();
 private:
     static int tempCount;
@@ -26,8 +28,11 @@ private:
 
 enum InterCodeOperator
 {
-    IC_ADD, IC_SUB, IC_MUL, IC_DIV, IC_MOD, IC_AND, IC_OR, IC_NOT, IC_JL, IC_JLE, IC_JEQ, IC_LABEL
+    IC_ADD, IC_SUB, IC_MUL, IC_DIV, IC_MOD, IC_EQUAL, IC_NEQ, IC_GREATER, IC_LESS, IC_GEQ, IC_LEQ, 
+    IC_AND, IC_OR, IC_NOT, IC_JL, IC_JLE, IC_JZ, IC_JNZ, IC_JMP, IC_LABEL, IC_MOVE, IC_OFFSET, IC_ARG, IC_CALL, IC_RET
 };
+
+InterCodeOperator optrFromToken(int token);
 
 class InterCode
 {

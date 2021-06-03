@@ -89,6 +89,16 @@ void ASTNode::merge()
     // }
 }
 
+void ASTNode::mergeIf()
+{
+    while(getLastChild()->is(else_part))
+    {
+        for(int i = 0; i < getLastChild()->m_children.size(); i++)
+            m_children.push_back(getLastChild()->m_children[i]);
+        delete getLastChild();
+    }
+}
+
 ASTNode *ASTNode::simplify()
 {
     // ASTNode *t = child;
@@ -98,6 +108,8 @@ ASTNode *ASTNode::simplify()
         if (!t) continue;
         if (t->symbol == program || t->symbol == statements || t->symbol == para_list || t->symbol == args)
             t->merge();
+        else if (t->symbol == if_statement)
+            t->mergeIf();
     }
     return this;
 }

@@ -54,8 +54,7 @@ para : type ID { $$ = new ASTNode(para, generateVector(2, $1, $2)); }
      | type LB RB ID { $$ = new ASTNode(para, generateVector(3, $1, $2, $4)); }
      ;
 declaration : type ID                   { $$ = new ASTNode(declaration, generateVector(2, $1, $2)); }
-            | type ID LB INT_LITERAL RB { $$ = new ASTNode(declaration, generateVector(3, $1, $2, $4)); }
-            | type ID LB ID RB { $$ = new ASTNode(declaration, generateVector(3, $1, $2, $4)); }
+            | type ID LB RB { $$ = new ASTNode(declaration, generateVector(3, $1, $2, $3)); }
             ;
 statements : statement statements { $$ = new ASTNode(statements, generateVector(2, $1, $2)); }
            |                      { $$ = NULL; }
@@ -89,12 +88,12 @@ exp : lexp ASSIGN exp { $$ = new ASTNode(exp, generateVector(3, $1, $2, $3)); }
     | exp AND exp     { $$ = new ASTNode(exp, generateVector(3, $1, $2, $3)); }
     | exp OR exp      { $$ = new ASTNode(exp, generateVector(3, $1, $2, $3)); }
     | NOT exp         { $$ = new ASTNode(exp, generateVector(2, $1, $2)); }
-    | LP exp RP       { $$ = new ASTNode(exp, generateVector(1, $2)); }
+    | LP exp RP       { $$ = $2; }
     | lexp            { $$ = new ASTNode(exp, generateVector(1, $1)); }
     | literal         { $$ = new ASTNode(exp, generateVector(1, $1)); $$->setType($1); }
     | func_call       { $$ = new ASTNode(exp, generateVector(1, $1)); }
     ;
-func_call : ID LP args RP { $$ = new ASTNode(func_call, generateVector(2, $1, $3)); }
+func_call : ID LP args RP { $$ = (new ASTNode(func_call, generateVector(2, $1, $3)))->simplify(); }
 args : exp COMMA args { $$ = new ASTNode(args, generateVector(2, $1, $3)); }
      | exp            { $$ = new ASTNode(args, generateVector(1, $1)); }
      |                { $$ = NULL; }

@@ -1,8 +1,31 @@
 #include "IntermediateCode.h"
 
-const string InterCode::operators[] = {"add", "sub", "mul", "div", "mod", "and", "or", "not", "jl", "jle", "jeq", "label"};
+const string InterCode::operators[] = {"add", "sub", "mul", "div", "mod", "equal", "neq", "greater", "less", "geq", "leq", 
+    "and", "or", "not", "jl", "jle", "jz", "jnz", "jmp", "label", "move", "offset", "arg", "call", "return"};
 
 int InterCodeOperand::tempCount = 0;
+
+InterCodeOperator optrFromToken(int token)
+{
+    switch (token)
+    {
+    case ADD: return IC_ADD;
+    case SUB: return IC_SUB;
+    case MUL: return IC_MUL;
+    case DIV: return IC_DIV;
+    case MOD: return IC_MOD;
+    case EQUAL: return IC_EQUAL;
+    case NEQ: return IC_NEQ;
+    case GREATER: return IC_GREATER;
+    case LESS: return IC_LESS;
+    case GEQ: return IC_GEQ;
+    case LEQ: return IC_LEQ;
+    case AND: return IC_AND;
+    case OR: return IC_OR;
+    case NOT: return IC_NOT;
+    default: return IC_MOVE;
+    }
+}
 
 InterCodeOperand *InterCodeOperand::createLiteral(int i)
 {
@@ -28,11 +51,17 @@ InterCodeOperand *InterCodeOperand::createLiteral(string s)
     return ret;
 }
 
-InterCodeOperand *InterCodeOperand::createTemp()
+// id=0: 以最后一个中间变量创建操作数   id=1: 创建新的中间变量作为操作数
+InterCodeOperand *InterCodeOperand::createTemp(int id)
 {
     InterCodeOperand *ret = new InterCodeOperand();
     ret->type = InterCodeOperandType::TEMP;
-    ret->value.ival = tempCount++;
+    if (id == 0)
+        ret->value.ival = tempCount - 1;
+    else if (id == -1)
+        ret->value.ival = tempCount++;
+    else
+        ret->value.ival = id;
     return ret;
 }
 

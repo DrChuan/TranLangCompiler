@@ -42,6 +42,7 @@ private:
     static const int bias = 258;
     void print();
     void merge();
+    void mergeIf();
     // void addChild(ASTNode *child);
     vector<ASTNode *> m_children;
     int symbol;

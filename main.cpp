@@ -34,10 +34,14 @@ int main()
     printf("start parsing\n");
     if (yyparse() != 0)
         return 0;
-    printf("Success!\n");
+    printf("Parsing success!\n");
     tree.printDirectory();
     SymbolTable *symbolTable = TreeScanner::getScanner().firstScan(tree);
     symbolTable->print();
     InterCodeList *interCodeList = TreeScanner::getScanner().secondScan(tree, *symbolTable);
     interCodeList->print();
+    if (TreeScanner::getScanner().hasError())
+        TreeScanner::getScanner().printErrors();
+    else
+        cout << "Intermediate code generating success!" << std::endl;
 }

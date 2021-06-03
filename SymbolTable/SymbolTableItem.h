@@ -22,6 +22,7 @@ public:
     SymbolTableItem(int offset, int type, int extraInfo, SymbolTable *tbPointer=nullptr) : offset(offset), type(type), extraInfo(extraInfo), tbPointer(tbPointer) {}
     void print(int indent);
     SymbolTable *getSubTable() const;
+    int getExtraInfo() const { return extraInfo; }
 private:
     int offset;
     int type;        // 由SymbolType中的枚举量按位取或得到
