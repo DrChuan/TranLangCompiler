@@ -20,9 +20,10 @@ public:
     SymbolTableItem(int offset, int type, SymbolTable *tbPointer=nullptr) : offset(offset), type(type), tbPointer(tbPointer) {}
     SymbolTableItem(int offset, int type, string refName, SymbolTable *tbPointer=nullptr) : offset(offset), type(type), refName(refName), tbPointer(tbPointer) {}
     SymbolTableItem(int offset, int type, int extraInfo, SymbolTable *tbPointer=nullptr) : offset(offset), type(type), extraInfo(extraInfo), tbPointer(tbPointer) {}
-    void print(int indent);
+    void print();
     SymbolTable *getSubTable() const;
     int getExtraInfo() const { return extraInfo; }
+    int getOffset() const { return offset; }
 private:
     int offset;
     int type;        // 由SymbolType中的枚举量按位取或得到

@@ -45,7 +45,9 @@ void SymbolTable::_print(int indent)
     {
         for (int i = 0; i < indent; i++)
             cout << " ";
-        cout << i->first << std::endl;
+        cout << i->first << " ";
+        i->second.print();
+        cout << std::endl;
         if (i->second.getSubTable())
             i->second.getSubTable()->_print(indent + 2);
     }

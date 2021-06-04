@@ -19,9 +19,9 @@ int createSymbolType(int type, bool isFunc, bool isClass, bool isArray)
     return ret;
 }
 
-void SymbolTableItem::print(int indent)
+void SymbolTableItem::print()
 {
-    
+    cout << "extraInfo:" << extraInfo << "  offset:" << offset;
 }
 
 SymbolTable *SymbolTableItem::getSubTable() const
