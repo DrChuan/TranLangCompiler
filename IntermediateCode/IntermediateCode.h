@@ -3,10 +3,16 @@
 
 #include "../utility.h"
 #include "../y.tab.h"
+#include "../SymbolTable/SymbolTableItem.h"
 
 enum InterCodeOperandType {
     I_LITERAL, D_LITERAL, S_LITERAL, TEMP, ORI_ID
 };
+
+// enum VarType {
+//     INT_T, DOUBLE_T, STRING_T, OTHER_T
+// };
+typedef int VarType;
 
 class InterCodeOperand
 {
@@ -14,17 +20,20 @@ public:
     static InterCodeOperand *createLiteral(int i);
     static InterCodeOperand *createLiteral(double d);
     static InterCodeOperand *createLiteral(string s);
-    static InterCodeOperand *createTemp(int id=-1);
-    static InterCodeOperand *createVar(string varName);
+    static InterCodeOperand *createTemp(VarType varType, int id=-1);
+    static InterCodeOperand *createVar(string varName, VarType varType);
     static int getTempCount() { return tempCount; }
     void print();
     InterCodeOperandType getType() const { return type; }
     int getIntVal() const { return value.ival; }
     double getDoubleVal() const { return value.dval; }
     string getStringVal() const { return value.sval; }
+    VarType getVarType() const { return varType; }
 private:
     static int tempCount;
+    static VarType lastVarType;
     InterCodeOperandType type;
+    VarType varType;
     U value;  // 若为字面量，直接保存在相应字段。
               // 若为变量名，用sval字段保存。
               // 若为中间变量，用ival字段保存编号

@@ -15,6 +15,10 @@ void TreeScanner::printErrors() const
         cout << "[Error] " << errorMsgs[i] << std::endl;
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 第一次扫描语法树，构建符号表
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 SymbolTable *TreeScanner::firstScan(AST &tree)
 {
     if (tree.getRoot() == nullptr)  // 检查根节点是否为空
@@ -58,9 +62,10 @@ void TreeScanner::scanFunction_1(ASTNode *functionNode, SymbolTable &table)
     scanStmts_1(stmtNodes, *subTable);   // 将局部变量填入符号表
 }
 
+// 扫描参数列表结点
 void TreeScanner::scanParas_1(const vector<ASTNode*> &paraNodes, SymbolTable &funcTable)
 {
-    int offset = 0;
+    int offset = 16;  // offset从16开始（(%rbp)为old_rbp，(%rbp+8)为return_addr）
     for (int i = 0; i < paraNodes.size(); i++)
     {
         funcTable.insertItem(paraNodes[i]->getLastChild()->getStringValue(), scanPara_1(paraNodes[i], offset));
@@ -68,6 +73,7 @@ void TreeScanner::scanParas_1(const vector<ASTNode*> &paraNodes, SymbolTable &fu
     }
 }
 
+// 扫描参数结点
 SymbolTableItem TreeScanner::scanPara_1(ASTNode *paraNode, int offset)
 {
     ASTNode *typeNode = paraNode->getChild(0);
@@ -84,8 +90,8 @@ void TreeScanner::_scanStmts_1(const vector<ASTNode*> &stmtNodes, SymbolTable &f
         // 对于声明语句，将相应符号放入符号表
         if (stmtNodes[i]->is(dcl_statement))
         {
-            funcTable.insertItem(stmtNodes[i]->getChild(0)->getChild(1)->getStringValue(), scanPara_1(stmtNodes[i]->getChild(0), offset));
-            offset += 8;
+            funcTable.insertItem(stmtNodes[i]->getChild(0)->getChild(1)->getStringValue(), scanDecl_1(stmtNodes[i]->getChild(0), offset));//(stmtNodes[i]->getChild(0)->getChild(1)->getStringValue(), scanPara_1(stmtNodes[i]->getChild(0), offset));
+            offset -= 8;
         }
         // 对于条件语句或循环语句，对其statements部分递归调用
         else if (stmtNodes[i]->is(if_statement))
@@ -108,13 +114,13 @@ void TreeScanner::_scanStmts_1(const vector<ASTNode*> &stmtNodes, SymbolTable &f
 
 void TreeScanner::scanStmts_1(const vector<ASTNode*> &stmtNodes, SymbolTable &funcTable)
 {
-    int offset = 0;
+    int offset = -8;
     _scanStmts_1(stmtNodes, funcTable, offset);
 }
 
 SymbolTableItem TreeScanner::scanDecl_1(ASTNode *declNode, int offset)
 {
-    ASTNode *typeNode = declNode->getChild(0);
+    ASTNode *typeNode = declNode->getChild(0)->getChild(0);
     bool isArray = declNode->childCount() == 3;
     int type = createSymbolType(typeNode->getSymbol(), false, false, isArray);
     return SymbolTableItem(offset, type);
@@ -156,8 +162,10 @@ void TreeScanner::scanFunction_2(ASTNode *node, SymbolTable &table, InterCodeLis
 {
     ASTNode *IDNode = node->getChild(1);
     SymbolTable *funcTable = table.getItem(IDNode->getStringValue())->getSubTable();
-    result->add(InterCode(InterCodeOperator::IC_LABEL, InterCodeOperand::createLiteral(IDNode->getStringValue())));
+    result->add(InterCode(InterCodeOperator::IC_FUNC, InterCodeOperand::createLiteral(IDNode->getStringValue())));
     scanStmts_2(node->getLastChild(), table, *funcTable, result);
+    if (result->get(result->size() - 1).optr != InterCodeOperator::IC_RET)
+        result->add(InterCode(InterCodeOperator::IC_RET));
 }
 
 void TreeScanner::scanStmts_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
@@ -177,19 +185,24 @@ void TreeScanner::scanStmts_2(ASTNode *node, SymbolTable &globalTable, SymbolTab
     }
 }
 
+// 扫描声明语句
 void TreeScanner::scanDecl_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
+    // 如果语句只有一个孩子，即没有初始化部分，则什么都不做
     if (node->childCount() == 1)
         return;
+    // 否则，获取其初始化结点
     ASTNode *initNode = node->getChild(1);
-    InterCodeOperand *src2 = terminalToOperand(initNode->getChild(0));
-    if (!src2)
-    {
-        _scanExp_2(initNode->getChild(0), globalTable, localTable, result);
-        src2 = InterCodeOperand::createTemp(0);
-    }
+    InterCodeOperand *src2 = terminalToOperand(initNode->getChild(0), globalTable, localTable, result);
     string id = node->getChild(0)->getChild(1)->getStringValue();
-    InterCodeOperand *dst = InterCodeOperand::createVar(id);
+    // 检查类型
+    VarType dstType = localTable.getItem(id)->getType();
+    if (src2->getVarType() != dstType)
+    {
+        errorMsgs.push_back("Initialization of variable " + id + " has a wrong type!");
+        return;
+    }
+    InterCodeOperand *dst = InterCodeOperand::createVar(id, dstType);
     result->add(InterCode(InterCodeOperator::IC_MOVE, dst, nullptr, src2));
 }
 
@@ -217,6 +230,7 @@ void TreeScanner::_scanExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTabl
     }
 }
 
+// 扫描赋值语句
 void TreeScanner::scanAssignExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     ASTNode *lvalNode = node->getChild(0);
@@ -224,7 +238,7 @@ void TreeScanner::scanAssignExp_2(ASTNode *node, SymbolTable &globalTable, Symbo
     InterCodeOperand *src1;
     InterCodeOperand *src2;
     InterCodeOperand *dst;
-
+    // 检查目标变量是否存在
     string id = lvalNode->getChild(0)->getStringValue();
     SymbolTableItem *item = localTable.getItem(id);
     if (item == nullptr)
@@ -232,42 +246,54 @@ void TreeScanner::scanAssignExp_2(ASTNode *node, SymbolTable &globalTable, Symbo
         errorMsgs.push_back("Identifier " + id + " does not exist in this scope!");
         return;
     }
-    dst = InterCodeOperand::createVar(id);
+    dst = InterCodeOperand::createVar(id, item->getType());
 
     if (isArray)
     {
-        ASTNode *indexExp = lvalNode->getChild(1);
-        src1 = terminalToOperand(indexExp);
-        if (!src1)
+        // 若dst不是数组类型
+        if (!(dst->getVarType() & SymbolType::ARRAY_S))
         {
-            _scanExp_2(indexExp, globalTable, localTable, result);
-            src1 = InterCodeOperand::createTemp(0);
+            errorMsgs.push_back("Cannot use index to access non-array variable " + id + "!");
+            return;
+        }
+        ASTNode *indexExp = lvalNode->getChild(1);
+        src1 = terminalToOperand(indexExp, globalTable, localTable, result);
+        if (!(src1->getVarType() & SymbolType::INT_S))
+        {
+            errorMsgs.push_back("Index of array must be an integer expression!");
+            return;
         }
     }
     else
         src1 = InterCodeOperand::createLiteral(-1);
 
-    src2 = terminalToOperand(node->getLastChild());
-    if (!src2)
+    src2 = terminalToOperand(node->getLastChild(), globalTable, localTable, result);
+    if ( (!isArray && !((src2->getVarType() & SymbolType::ARRAY_S) ^ (dst->getVarType() & SymbolType::ARRAY_S))) ||   // 不是下标访问，dst和src1的数组标志位相同
+         (isArray && (dst->getVarType() & SymbolType::ARRAY_S) && !(src2->getVarType() & SymbolType::ARRAY_S))    // 是下标访问，dst是数字，src1不是数组
+       )
     {
-        _scanExp_2(node->getLastChild(), globalTable, localTable, result);
-        src2 = InterCodeOperand::createTemp(0);
+        if ((dst->getVarType() & ~SymbolType::ARRAY_S) != (src2->getVarType() & ~SymbolType::ARRAY_S))   // 如果dst和src2的基本类型不同，则报错
+        {
+            errorMsgs.push_back("Assign to variable " + id + " has a wrong type!");
+            return;
+        }
+        result->add(InterCode(InterCodeOperator::IC_MOVE, dst, src1, src2));
     }
-
-    result->add(InterCode(InterCodeOperator::IC_MOVE, dst, src1, src2));
+    else
+        errorMsgs.push_back("Assign to variable " + id + " has a wrong type!");
 }
 
 void TreeScanner::scan1Exp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     ASTNode *expr = node->getChild(1);
     int optr = node->getChild(0)->getSymbol();
-    InterCodeOperand *src1 = terminalToOperand(expr);
-    if (!src1)
+    InterCodeOperand *src1 = terminalToOperand(expr, globalTable, localTable, result);
+    if (src1->getVarType() != (int)SymbolType::INT_S)
     {
-        _scanExp_2(expr, globalTable, localTable, result);
-        src1 = InterCodeOperand::createTemp(0);
+        errorMsgs.push_back("Oprand for '!' is not an integer!");
+        return;
     }
-    InterCodeOperand *dst = InterCodeOperand::createTemp(-1);
+    InterCodeOperand *dst = InterCodeOperand::createTemp(SymbolType::INT_S, -1);
     result->add(InterCode(optrFromToken(optr), dst, src1));
 }
 
@@ -276,19 +302,14 @@ void TreeScanner::scan2Exp_2(ASTNode *node, SymbolTable &globalTable, SymbolTabl
     ASTNode *left = node->getChild(0);
     ASTNode *right = node->getChild(2);
     int optr = node->getChild(1)->getSymbol();
-    InterCodeOperand *src1 = terminalToOperand(left);
-    if (!src1)
+    InterCodeOperand *src1 = terminalToOperand(left, globalTable, localTable, result);
+    InterCodeOperand *src2 = terminalToOperand(right, globalTable, localTable, result);
+    if (!checkOperandType(src1, src2, optrFromToken(optr)))
     {
-        _scanExp_2(left, globalTable, localTable, result);
-        src1 = InterCodeOperand::createTemp(0);
+        errorMsgs.push_back("Oprand does not match!\n");
+        return;
     }
-    InterCodeOperand *src2 = terminalToOperand(right);
-    if (!src2)
-    {
-        _scanExp_2(right, globalTable, localTable, result);
-        src2 = InterCodeOperand::createTemp(0);
-    }
-    InterCodeOperand *dst = InterCodeOperand::createTemp(-1);
+    InterCodeOperand *dst = InterCodeOperand::createTemp(inferDstType(src1, src2, optrFromToken(optr)), -1);
     result->add(InterCode(optrFromToken(optr), dst, src1, src2));
 }
 
@@ -296,14 +317,14 @@ void TreeScanner::scanIndexExp_2(ASTNode *node, SymbolTable &globalTable, Symbol
 {
     ASTNode *expr = node->getChild(1);
     string id = node->getChild(0)->getStringValue();
-    InterCodeOperand *src1 = InterCodeOperand::createVar(id);
-    InterCodeOperand *src2 = terminalToOperand(expr);
-    if (!src2)
+    InterCodeOperand *src1 = InterCodeOperand::createVar(id, localTable.getItem(id)->getType());
+    InterCodeOperand *src2 = terminalToOperand(expr, globalTable, localTable, result);
+    if (!(src2->getVarType() & SymbolType::INT_S))
     {
-        _scanExp_2(expr, globalTable, localTable, result);
-        src2 = InterCodeOperand::createTemp(0);
+        errorMsgs.push_back("Index of array must be an integer expression!");
+        return;
     }
-    InterCodeOperand *dst = InterCodeOperand::createTemp(-1);
+    InterCodeOperand *dst = InterCodeOperand::createTemp(src1->getVarType() & ~SymbolType::ARRAY_S, -1);
     result->add(InterCode(InterCodeOperator::IC_OFFSET, dst, src1, src2));
 }
 
@@ -316,18 +337,13 @@ void TreeScanner::scanWhile_2(ASTNode *node, SymbolTable &globalTable, SymbolTab
 {
     InterCodeOperand *dst_begin = InterCodeOperand::createLiteral("while_" + std::to_string(while_cnt) + "_begin");
     InterCodeOperand *dst_end = InterCodeOperand::createLiteral("while_" + std::to_string(while_cnt) + "_end");
+    while_cnt += 1;
     result->add(InterCode(InterCodeOperator::IC_LABEL, dst_begin));
-    InterCodeOperand *src1 = terminalToOperand(node->getChild(0));
-    if (!src1)
-    {
-        _scanExp_2(node->getChild(0), globalTable, localTable, result);
-        src1 = InterCodeOperand::createTemp(0);
-    }
+    InterCodeOperand *src1 = terminalToOperand(node->getChild(0), globalTable, localTable, result);
     result->add(InterCode(InterCodeOperator::IC_JZ, dst_end, src1));
     scanStmts_2(node->getChild(1), globalTable, localTable, result);
     result->add(InterCode(InterCodeOperator::IC_JMP, dst_begin));
     result->add(InterCode(InterCodeOperator::IC_LABEL, dst_end));
-    while_cnt += 1;
 }
 
 void TreeScanner::scanIf_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
@@ -337,12 +353,7 @@ void TreeScanner::scanIf_2(ASTNode *node, SymbolTable &globalTable, SymbolTable 
     for (int i = 0; i < nChild / 2; i++)
     {
         ASTNode *curExpNode = node->getChild(2 * i);
-        InterCodeOperand *src1 = terminalToOperand(curExpNode);
-        if (!src1)
-        {
-            _scanExp_2(curExpNode, globalTable, localTable, result);
-            src1 = InterCodeOperand::createTemp(0);
-        }
+        InterCodeOperand *src1 = terminalToOperand(curExpNode, globalTable, localTable, result);
         dst = InterCodeOperand::createLiteral("br_" + std::to_string(br_cnt) + "_" + std::to_string(i));
         result->add(InterCode(InterCodeOperator::IC_JNZ, dst, src1));
     }
@@ -377,17 +388,22 @@ void TreeScanner::scanReturn_2(ASTNode *node, SymbolTable &globalTable, SymbolTa
     }
     else
     {
-        InterCodeOperand *dst = terminalToOperand(node->getChild(0));
-        if (!dst)
-        {
-            _scanExp_2(node->getChild(0), globalTable, localTable, result);
-            dst = InterCodeOperand::createTemp(0);
-        }
+        InterCodeOperand *dst = terminalToOperand(node->getChild(0), globalTable, localTable, result);
         result->add(InterCode(InterCodeOperator::IC_RET, dst));
     }
 }
 
-InterCodeOperand *TreeScanner::terminalToOperand(ASTNode *node)
+InterCodeOperand *TreeScanner::terminalToOperand(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
+{
+    InterCodeOperand *res = __terminalToOperand(node, localTable);
+    if (!res)
+    {
+        _scanExp_2(node, globalTable, localTable, result);
+        res = InterCodeOperand::createTemp(0, 0);
+    }
+}
+
+InterCodeOperand *TreeScanner::__terminalToOperand(ASTNode *node, SymbolTable &localTable)
 {
     if (node->childCount() != 1)
         return nullptr;
@@ -403,7 +419,8 @@ InterCodeOperand *TreeScanner::terminalToOperand(ASTNode *node)
     }
     else if (t->is(lexp) && t->childCount() == 1)
     {
-        return InterCodeOperand::createVar(t->getChild(0)->getStringValue());
+        string id = t->getChild(0)->getStringValue();
+        return InterCodeOperand::createVar(id, localTable.getItem(id)->getType());
     }
     return nullptr;
 }
@@ -411,7 +428,7 @@ InterCodeOperand *TreeScanner::terminalToOperand(ASTNode *node)
 void TreeScanner::scanCallExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     string id = node->getChild(0)->getStringValue();
-    InterCodeOperand *dst = InterCodeOperand::createVar(id);
+    InterCodeOperand *dst = InterCodeOperand::createVar(id, localTable.getItem(id)->getType() & ~SymbolType::FUNC_S);
     SymbolTableItem *item = globalTable.getItem(id);
     if (item == nullptr)
     {
@@ -426,22 +443,22 @@ void TreeScanner::scanCallExp_2(ASTNode *node, SymbolTable &globalTable, SymbolT
             " parameters, but " + std::to_string(argsNode->childCount()) + " were given!");
         return;
     }
-    for (int i = 0; i < paraNum; i++)
+    for (int i = paraNum - 1; i >= 0; i--)   // 倒序压参数
     {
         ASTNode *curChild = argsNode->getChild(i);
-        InterCodeOperand *dst_ = terminalToOperand(curChild);
-        if (!dst_)
-        {
-            _scanExp_2(curChild, globalTable, localTable, result);
-            dst_ = InterCodeOperand::createTemp(0);
-        }
+        InterCodeOperand *dst_ = terminalToOperand(curChild, globalTable, localTable, result);
         result->add(InterCode(InterCodeOperator::IC_ARG, dst_));
     }
     InterCodeOperand *src1 = InterCodeOperand::createLiteral(paraNum);
     result->add(InterCode(InterCodeOperator::IC_CALL, dst, src1));
 }
 
-bool TreeScanner::checkOperand(string id, bool isArray, SymbolTable &globalTable, SymbolTable &localTable)
+bool TreeScanner::checkOperandType(InterCodeOperand *src1, InterCodeOperand *src2, InterCodeOperator optr)
+{
+
+}
+
+VarType TreeScanner::inferDstType(InterCodeOperand *src1, InterCodeOperand *src2, InterCodeOperator optr)
 {
 
 }

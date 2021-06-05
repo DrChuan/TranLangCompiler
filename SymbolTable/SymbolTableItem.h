@@ -24,6 +24,7 @@ public:
     SymbolTable *getSubTable() const;
     int getExtraInfo() const { return extraInfo; }
     int getOffset() const { return offset; }
+    int getType() const { return type; }
 private:
     int offset;
     int type;        // 由SymbolType中的枚举量按位取或得到

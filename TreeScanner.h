@@ -49,8 +49,11 @@ private:
     void scanIf_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
     void scanCallExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
     void scanReturn_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
-    InterCodeOperand *terminalToOperand(ASTNode *node);  // 如果结点的孩子是变量名或字面量，则构造相应的中间代码操作数返回；否则返回nullptr
-    bool checkOperand(string id, bool isArray, SymbolTable &globalTable, SymbolTable &localTable);
+    InterCodeOperand *terminalToOperand(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    InterCodeOperand *__terminalToOperand(ASTNode *node, SymbolTable &localTable);  // 如果结点的孩子是变量名或字面量，则构造相应的中间代码操作数返回；否则返回nullptr
+    //bool checkOperand(string id, bool isArray, SymbolTable &globalTable, SymbolTable &localTable);
+    bool checkOperandType(InterCodeOperand *src1, InterCodeOperand *src2, InterCodeOperator optr);
+    VarType inferDstType(InterCodeOperand *src1, InterCodeOperand *src2, InterCodeOperator optr);
 };
 
 #endif

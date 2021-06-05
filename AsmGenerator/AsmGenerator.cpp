@@ -26,6 +26,8 @@ void AsmGenerator::generateAsm(std::ostream &out, SymbolTable &table, InterCodeL
 
 void AsmGenerator::translateOneIC(InterCode &code)
 {
+    static int i = 0;
+    ss << "[" << i++ << "]\n";
     switch (code.optr)
     {
     case IC_ADD:
@@ -97,12 +99,25 @@ void AsmGenerator::doJump(InterCode &code)
 
 void AsmGenerator::doCalculate(InterCode &code)
 {
+    InterCodeOperand *src1 = code.src1;
+    InterCodeOperand *src2 = code.src2;
+    InterCodeOperand *dst = code.dst;
+
+}
+
+void AsmGenerator::doArithAndLogic(InterCode code)
+{
+
+}
+
+void AsmGenerator::doCompare(InterCode code)
+{
 
 }
 
 void AsmGenerator::doMove(InterCode &code)
 {
-    if (code.src1 == nullptr)  // dst = src2
+    if (code.src1 == nullptr || code.src1->getIntVal() == -1)  // dst = src2
     {
         string reg = getReg();
         moveToReg(code.src2, reg);
@@ -145,15 +160,29 @@ void AsmGenerator::moveToReg(InterCodeOperand *oprand, string reg)
 {
     InterCodeOperandType type = oprand->getType();
     if (type == InterCodeOperandType::I_LITERAL)
-        ss << "    mov $" << oprand->getIntVal() << ", " << reg << "\n";
+        ss << "    mov $" << oprand->getIntVal() << ", %" << reg << "\n";
     else if (type == InterCodeOperandType::ORI_ID)
         ss << "    mov $" << idToOffset(oprand->getStringVal()) << "(%rbp), %" << reg << "\n";
+    else if (type == InterCodeOperandType::TEMP)
+    {
+        string treg = getReg(oprand->getIntVal());
+        if (reg != treg)
+            ss << "    mov %" << treg << ", %" << reg << "\n";
+    }
     
 }
 
 void AsmGenerator::moveFromReg(string reg, InterCodeOperand *oprand)
 {
-
+    InterCodeOperandType type = oprand->getType();
+    if (type == InterCodeOperandType::ORI_ID)
+        ss << "    mov %" << reg << ", $" << idToOffset(oprand->getStringVal()) << "(%rbp)\n";
+    else if (type == InterCodeOperandType::TEMP)
+    {
+        string treg = getReg();
+        setRegUse(reg, oprand->getIntVal());
+        ss << "    mov %" << reg << ", %" << treg << "\n";
+    }
 }
 
 void AsmGenerator::moveFromReg(string reg, string expr)
@@ -187,4 +216,14 @@ void AsmGenerator::setRegUse(string reg, int tempVarID)
 int AsmGenerator::idToOffset(string id)
 {
     return curFuncTable->getItem(id)->getOffset();
+}
+
+bool AsmGenerator::isInt(InterCodeOperand *oprand)
+{
+    return oprand->getType() == InterCodeOperandType::I_LITERAL || oprand->getType() == InterCodeOperandType::ORI_ID;
+}
+
+bool AsmGenerator::isString(InterCodeOperand *oprand)
+{
+
 }

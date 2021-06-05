@@ -34,6 +34,8 @@ private:
     void doFunc(InterCode &code);
     void doJump(InterCode &code);
     void doCalculate(InterCode &code);
+    void doArithAndLogic(InterCode code);
+    void doCompare(InterCode code);
     void doMove(InterCode &code);
     void doCall(InterCode &code);
     void doArg(InterCode &code);
@@ -46,6 +48,9 @@ private:
     void setRegUse(string reg, int tempVarID);
 
     int idToOffset(string id);
+
+    bool isInt(InterCodeOperand *oprand);
+    bool isString(InterCodeOperand *oprand);
 };
 
 #endif

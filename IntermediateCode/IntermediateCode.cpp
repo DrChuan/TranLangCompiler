@@ -4,6 +4,7 @@ const string InterCode::operators[] = {"add", "sub", "mul", "div", "mod", "equal
     "and", "or", "not", "jl", "jle", "jz", "jnz", "jmp", "label", "move", "offset", "arg", "call", "return", "func"};
 
 int InterCodeOperand::tempCount = 0;
+VarType InterCodeOperand::lastVarType = 0;
 
 InterCodeOperator optrFromToken(int token)
 {
@@ -32,6 +33,7 @@ InterCodeOperand *InterCodeOperand::createLiteral(int i)
     InterCodeOperand *ret = new InterCodeOperand();
     ret->type = InterCodeOperandType::I_LITERAL;
     ret->value.ival = i;
+    ret->varType = SymbolType::INT_S;
     return ret;
 }
 
@@ -40,6 +42,7 @@ InterCodeOperand *InterCodeOperand::createLiteral(double d)
     InterCodeOperand *ret = new InterCodeOperand();
     ret->type = InterCodeOperandType::D_LITERAL;
     ret->value.dval = d;
+    ret->varType = SymbolType::DOUBLE_S;
     return ret;
 }
 
@@ -48,28 +51,41 @@ InterCodeOperand *InterCodeOperand::createLiteral(string s)
     InterCodeOperand *ret = new InterCodeOperand();
     ret->type = InterCodeOperandType::S_LITERAL;
     ret->value.sval = s;
+    ret->varType = SymbolType::STRING_S;
     return ret;
 }
 
 // id=0: 以最后一个中间变量创建操作数   id=1: 创建新的中间变量作为操作数
-InterCodeOperand *InterCodeOperand::createTemp(int id)
+InterCodeOperand *InterCodeOperand::createTemp(VarType varType, int id)
 {
     InterCodeOperand *ret = new InterCodeOperand();
     ret->type = InterCodeOperandType::TEMP;
     if (id == 0)
+    {
         ret->value.ival = tempCount - 1;
+        ret->varType = lastVarType;
+    }
     else if (id == -1)
+    {
         ret->value.ival = tempCount++;
+        ret->varType = varType;
+        lastVarType = varType;
+    }
     else
+    {
         ret->value.ival = id;
+        ret->varType = varType;
+        lastVarType = varType;
+    }
     return ret;
 }
 
-InterCodeOperand *InterCodeOperand::createVar(string varName)
+InterCodeOperand *InterCodeOperand::createVar(string varName, VarType varType)
 {
     InterCodeOperand *ret = new InterCodeOperand();
     ret->type = InterCodeOperandType::ORI_ID;
     ret->value.sval = varName;
+    ret->varType = varType;
     return ret;
 }
 
