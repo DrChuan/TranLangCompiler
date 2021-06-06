@@ -1,4 +1,5 @@
 #ifndef __TREE_SCANNER__
+
 #define __TREE_SCANNER__
 
 #include "utility.h"
@@ -25,6 +26,7 @@ private:
     vector<string> errorMsgs;
     // 第一次扫描，创建符号表
     void _firstScan(ASTNode *node, SymbolTable &table);  // 执行实际的扫描和符号表构造动作
+    void loadLibFunction(SymbolTable &table);
     void scanProgram_1(ASTNode *node, SymbolTable &table);  // 扫描program结点
     void scanFunction_1(ASTNode *node, SymbolTable &table);  // 扫描function结点
     void scanClass_1(ASTNode *node, SymbolTable &table);   // 扫描class结点
@@ -54,6 +56,7 @@ private:
     //bool checkOperand(string id, bool isArray, SymbolTable &globalTable, SymbolTable &localTable);
     bool checkOperandType(InterCodeOperand *src1, InterCodeOperand *src2, InterCodeOperator optr);
     VarType inferDstType(InterCodeOperand *src1, InterCodeOperand *src2, InterCodeOperator optr);
+    void addErrorMsg(int line, string msg);
 };
 
 #endif

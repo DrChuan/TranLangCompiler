@@ -11,20 +11,23 @@ enum SymbolType
 
 int createSymbolType(int type, bool isFunc, bool isClass, bool isArray);
 
+typedef int VarType;
+
 class SymbolTable;
 
 class SymbolTableItem
 {
 public:
     SymbolTableItem() {}
-    SymbolTableItem(int offset, int type, SymbolTable *tbPointer=nullptr) : offset(offset), type(type), tbPointer(tbPointer) {}
-    SymbolTableItem(int offset, int type, string refName, SymbolTable *tbPointer=nullptr) : offset(offset), type(type), refName(refName), tbPointer(tbPointer) {}
-    SymbolTableItem(int offset, int type, int extraInfo, SymbolTable *tbPointer=nullptr) : offset(offset), type(type), extraInfo(extraInfo), tbPointer(tbPointer) {}
+    SymbolTableItem(int _offset, int _type, SymbolTable *_tbPointer=nullptr) : offset(_offset), type(_type), tbPointer(_tbPointer) {}
+    SymbolTableItem(int _offset, int _type, string _refName, SymbolTable *_tbPointer=nullptr) : offset(_offset), type(_type), refName(_refName), tbPointer(_tbPointer) {}
+    SymbolTableItem(int _offset, int _type, int _extraInfo, SymbolTable *_tbPointer=nullptr) : offset(_offset), type(_type), extraInfo(_extraInfo), tbPointer(_tbPointer) {}
     void print();
     SymbolTable *getSubTable() const;
     int getExtraInfo() const { return extraInfo; }
     int getOffset() const { return offset; }
     int getType() const { return type; }
+
 private:
     int offset;
     int type;        // 由SymbolType中的枚举量按位取或得到
@@ -32,5 +35,10 @@ private:
     int extraInfo;   // 对于函数类型，保存参数个数。对于class类型，保存类的字节数
     SymbolTable *tbPointer;
 };
+
+bool isInt(VarType varType);
+bool isDouble(VarType varType);
+bool isString(VarType varType);
+bool isArray(VarType varType);
 
 #endif

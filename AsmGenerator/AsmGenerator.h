@@ -27,15 +27,26 @@ private:
     static const int REG_CNT = 7;
     string regs[REG_CNT] = {"rbx", "rcx", "rdx", "r10", "r11", "r12", "r13"};
     int regsUse[REG_CNT] = {-1, -1, -1, -1, -1, -1, -1};
+    int regsUseTmp[REG_CNT] = {-1, -1, -1, -1, -1, -1, -1};
+
+    static int codeCnt;
 
     void translateOneIC(InterCode &code);
 
     void doLabel(InterCode &code);
     void doFunc(InterCode &code);
     void doJump(InterCode &code);
-    void doCalculate(InterCode &code);
-    void doArithAndLogic(InterCode code);
-    void doCompare(InterCode code);
+    void doOffset(InterCode &code);
+    void doIntOperate(InterCode &code, string optr);
+    void doIntOperateSingle(InterCode &code, string optr);
+    void doLogicOperate(InterCode &code, string optr);
+    void doCmpOperate(InterCode &code, string optr);
+    void doLogicOperateSingle(InterCode &code, string optr);
+    void doAdd(InterCode &code);
+    void doSub(InterCode &code);
+    void doMulDiv(InterCode &code);
+    void doModLogic(InterCode &code);
+    void doCompare(InterCode &code);
     void doMove(InterCode &code);
     void doCall(InterCode &code);
     void doArg(InterCode &code);
@@ -46,11 +57,9 @@ private:
     void moveFromReg(string reg, string expr);
     string getReg(int tempVarID=-1);
     void setRegUse(string reg, int tempVarID);
+    void backRegUse(string reg);
 
     int idToOffset(string id);
-
-    bool isInt(InterCodeOperand *oprand);
-    bool isString(InterCodeOperand *oprand);
 };
 
 #endif

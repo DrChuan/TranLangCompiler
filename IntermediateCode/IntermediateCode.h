@@ -1,4 +1,5 @@
 #ifndef __INTERMEDIATE_CODE__
+
 #define __INTERMEDIATE_CODE__
 
 #include "../utility.h"
@@ -12,7 +13,7 @@ enum InterCodeOperandType {
 // enum VarType {
 //     INT_T, DOUBLE_T, STRING_T, OTHER_T
 // };
-typedef int VarType;
+
 
 class InterCodeOperand
 {

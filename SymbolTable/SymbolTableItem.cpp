@@ -28,3 +28,23 @@ SymbolTable *SymbolTableItem::getSubTable() const
 {
     return tbPointer;
 }
+
+bool isInt(VarType varType)
+{
+    return !!(varType & SymbolType::INT_S);
+}
+
+bool isDouble(VarType varType)
+{
+    return !!(varType & SymbolType::DOUBLE_S);
+}
+
+bool isString(VarType varType)
+{
+    return !!(varType & SymbolType::STRING_S);
+}
+
+bool isArray(VarType varType)
+{
+    return !!(varType & SymbolType::ARRAY_S);
+}

@@ -13,6 +13,7 @@ public:
     bool insertItem(string name, SymbolTableItem item);
     SymbolTableItem *getItem(string name);
     bool deleteItem(string name);
+    int getSize() const { return table.size(); }
 
     void print();
 private:

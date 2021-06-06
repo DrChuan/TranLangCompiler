@@ -24,8 +24,18 @@ SymbolTable *TreeScanner::firstScan(AST &tree)
     if (tree.getRoot() == nullptr)  // 检查根节点是否为空
         return nullptr;
     SymbolTable *table = new SymbolTable();  // 初始化总符号表
+    loadLibFunction(*table);
     _firstScan(tree.getRoot()->getChild(0), *table);  // 对start结点下的program结点进行扫描
     return table;
+}
+
+void TreeScanner::loadLibFunction(SymbolTable &table)
+{
+    int type;
+    type = createSymbolType(INT, true, false, false);
+    table.insertItem("readInt", SymbolTableItem(0, type, 0));
+    type = createSymbolType(VOID, true, false, false);
+    table.insertItem("printInt", SymbolTableItem(0, type, 1));
 }
 
 void TreeScanner::_firstScan(ASTNode *node, SymbolTable &table)
@@ -51,7 +61,7 @@ void TreeScanner::scanProgram_1(ASTNode *programNode, SymbolTable &table)
 void TreeScanner::scanFunction_1(ASTNode *functionNode, SymbolTable &table)
 {
     // 从函数结点中获取相关的函数信息
-    int type = createSymbolType(functionNode->getChild(0)->getSymbol(), true, false, false);
+    int type = createSymbolType(functionNode->getChild(0)->getChild(0)->getSymbol(), true, false, false);
     string name = functionNode->getChild(1)->getStringValue();
     const vector<ASTNode*> &paraNodes = functionNode->getChild(2)->getChildren();
     const vector<ASTNode*> &stmtNodes = functionNode->getChild(3)->getChildren();
@@ -78,10 +88,11 @@ SymbolTableItem TreeScanner::scanPara_1(ASTNode *paraNode, int offset)
 {
     ASTNode *typeNode = paraNode->getChild(0);
     bool isArray = paraNode->getChild(1)->is(LB);
-    int type = createSymbolType(typeNode->getSymbol(), false, false, isArray);
+    int type = createSymbolType(typeNode->getChild(0)->getSymbol(), false, false, isArray);
     return SymbolTableItem(offset, type);
 }
 
+//扫描语句列表
 void TreeScanner::_scanStmts_1(const vector<ASTNode*> &stmtNodes, SymbolTable &funcTable, int &offset)
 {
     // 遍历所有statements
@@ -112,12 +123,14 @@ void TreeScanner::_scanStmts_1(const vector<ASTNode*> &stmtNodes, SymbolTable &f
     }
 }
 
+// 扫描语句列表的入口
 void TreeScanner::scanStmts_1(const vector<ASTNode*> &stmtNodes, SymbolTable &funcTable)
 {
     int offset = -8;
     _scanStmts_1(stmtNodes, funcTable, offset);
 }
 
+// 扫描声明语句。将变量加入符号表
 SymbolTableItem TreeScanner::scanDecl_1(ASTNode *declNode, int offset)
 {
     ASTNode *typeNode = declNode->getChild(0)->getChild(0);
@@ -131,6 +144,10 @@ void TreeScanner::scanClass_1(ASTNode *functionNode, SymbolTable &table)
     
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 第二次扫描语法树，生成中间代码
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 InterCodeList *TreeScanner::secondScan(AST &tree, SymbolTable &table)
 {
     if (tree.getRoot() == nullptr)  // 检查根节点是否为空
@@ -142,6 +159,7 @@ InterCodeList *TreeScanner::secondScan(AST &tree, SymbolTable &table)
     return result;
 }
 
+// 内部入口函数，对不同类型的结点调用不同的函数
 void TreeScanner::_secondScan(ASTNode *node, SymbolTable &table, InterCodeList *result)
 {
     if (node == nullptr)
@@ -152,12 +170,14 @@ void TreeScanner::_secondScan(ASTNode *node, SymbolTable &table, InterCodeList *
         scanFunction_2(node, table, result);
 }
 
+// 扫描program结点，对其调用二次扫描入口函数
 void TreeScanner::scanProgram_2(ASTNode *node, SymbolTable &table, InterCodeList *result)
 {
     for (int i = 0; i < node->childCount(); i++)
         _secondScan(node->getChild(i), table, result);
 }
 
+// 扫描函数结点，生成函数调用代码并处理参数和语句
 void TreeScanner::scanFunction_2(ASTNode *node, SymbolTable &table, InterCodeList *result)
 {
     ASTNode *IDNode = node->getChild(1);
@@ -168,6 +188,7 @@ void TreeScanner::scanFunction_2(ASTNode *node, SymbolTable &table, InterCodeLis
         result->add(InterCode(InterCodeOperator::IC_RET));
 }
 
+// 扫描语句列表，对不同类型的语句分别调用不同的语句处理函数
 void TreeScanner::scanStmts_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     for (int i = 0; i < node->childCount(); i++)
@@ -185,7 +206,7 @@ void TreeScanner::scanStmts_2(ASTNode *node, SymbolTable &globalTable, SymbolTab
     }
 }
 
-// 扫描声明语句
+// 扫描声明语句，处理初始化操作。会对类型进行检查，保证进入汇编代码生成阶段的中间代码的类型是正确匹配的
 void TreeScanner::scanDecl_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     // 如果语句只有一个孩子，即没有初始化部分，则什么都不做
@@ -197,15 +218,16 @@ void TreeScanner::scanDecl_2(ASTNode *node, SymbolTable &globalTable, SymbolTabl
     string id = node->getChild(0)->getChild(1)->getStringValue();
     // 检查类型
     VarType dstType = localTable.getItem(id)->getType();
-    if (src2->getVarType() != dstType)
+    if ((src2->getVarType() & ~SymbolType::FUNC_S) != dstType)
     {
-        errorMsgs.push_back("Initialization of variable " + id + " has a wrong type!");
+        addErrorMsg(result->size()-1, "Initialization of variable " + id + " has a wrong type!");
         return;
     }
     InterCodeOperand *dst = InterCodeOperand::createVar(id, dstType);
     result->add(InterCode(InterCodeOperator::IC_MOVE, dst, nullptr, src2));
 }
 
+// 扫描表达式结点，根据表达式的类型调用相应函数
 void TreeScanner::_scanExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     int optr;
@@ -234,7 +256,7 @@ void TreeScanner::_scanExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTabl
 void TreeScanner::scanAssignExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     ASTNode *lvalNode = node->getChild(0);
-    bool isArray = node->childCount() == 2;
+    bool isArray = lvalNode->childCount() == 2;
     InterCodeOperand *src1;
     InterCodeOperand *src2;
     InterCodeOperand *dst;
@@ -243,7 +265,7 @@ void TreeScanner::scanAssignExp_2(ASTNode *node, SymbolTable &globalTable, Symbo
     SymbolTableItem *item = localTable.getItem(id);
     if (item == nullptr)
     {
-        errorMsgs.push_back("Identifier " + id + " does not exist in this scope!");
+        addErrorMsg(result->size()-1, "Identifier " + id + " does not exist in this scope!");
         return;
     }
     dst = InterCodeOperand::createVar(id, item->getType());
@@ -253,14 +275,14 @@ void TreeScanner::scanAssignExp_2(ASTNode *node, SymbolTable &globalTable, Symbo
         // 若dst不是数组类型
         if (!(dst->getVarType() & SymbolType::ARRAY_S))
         {
-            errorMsgs.push_back("Cannot use index to access non-array variable " + id + "!");
+            addErrorMsg(result->size()-1, "Cannot use index to access non-array variable " + id + "!");
             return;
         }
         ASTNode *indexExp = lvalNode->getChild(1);
         src1 = terminalToOperand(indexExp, globalTable, localTable, result);
         if (!(src1->getVarType() & SymbolType::INT_S))
         {
-            errorMsgs.push_back("Index of array must be an integer expression!");
+            addErrorMsg(result->size()-1, "Index of array must be an integer expression!");
             return;
         }
     }
@@ -272,31 +294,34 @@ void TreeScanner::scanAssignExp_2(ASTNode *node, SymbolTable &globalTable, Symbo
          (isArray && (dst->getVarType() & SymbolType::ARRAY_S) && !(src2->getVarType() & SymbolType::ARRAY_S))    // 是下标访问，dst是数字，src1不是数组
        )
     {
-        if ((dst->getVarType() & ~SymbolType::ARRAY_S) != (src2->getVarType() & ~SymbolType::ARRAY_S))   // 如果dst和src2的基本类型不同，则报错
+        if ((dst->getVarType() & ~SymbolType::ARRAY_S & ~SymbolType::FUNC_S) != (src2->getVarType() & ~SymbolType::ARRAY_S & ~SymbolType::FUNC_S))   // 如果dst和src2的基本类型不同，则报错
         {
-            errorMsgs.push_back("Assign to variable " + id + " has a wrong type!");
+            addErrorMsg(result->size()-1, "Assign to variable " + id + " has a wrong type!");
             return;
         }
         result->add(InterCode(InterCodeOperator::IC_MOVE, dst, src1, src2));
     }
     else
-        errorMsgs.push_back("Assign to variable " + id + " has a wrong type!");
+        addErrorMsg(result->size()-1, "Assign to variable " + id + " has a wrong type!");
 }
 
+
+// 扫描一元运算表达式
 void TreeScanner::scan1Exp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     ASTNode *expr = node->getChild(1);
     int optr = node->getChild(0)->getSymbol();
     InterCodeOperand *src1 = terminalToOperand(expr, globalTable, localTable, result);
-    if (src1->getVarType() != (int)SymbolType::INT_S)
+    if ((src1->getVarType() & SymbolType::INT_S) == 0)
     {
-        errorMsgs.push_back("Oprand for '!' is not an integer!");
+        addErrorMsg(result->size()-1, "Oprand for '!' is not an integer!");
         return;
     }
     InterCodeOperand *dst = InterCodeOperand::createTemp(SymbolType::INT_S, -1);
     result->add(InterCode(optrFromToken(optr), dst, src1));
 }
 
+// 扫描二元运算表达式
 void TreeScanner::scan2Exp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     ASTNode *left = node->getChild(0);
@@ -306,13 +331,14 @@ void TreeScanner::scan2Exp_2(ASTNode *node, SymbolTable &globalTable, SymbolTabl
     InterCodeOperand *src2 = terminalToOperand(right, globalTable, localTable, result);
     if (!checkOperandType(src1, src2, optrFromToken(optr)))
     {
-        errorMsgs.push_back("Oprand does not match!\n");
+        addErrorMsg(result->size()-1, "Oprand does not match!\n");
         return;
     }
     InterCodeOperand *dst = InterCodeOperand::createTemp(inferDstType(src1, src2, optrFromToken(optr)), -1);
     result->add(InterCode(optrFromToken(optr), dst, src1, src2));
 }
 
+// 扫描下标访问表达式
 void TreeScanner::scanIndexExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     ASTNode *expr = node->getChild(1);
@@ -321,18 +347,20 @@ void TreeScanner::scanIndexExp_2(ASTNode *node, SymbolTable &globalTable, Symbol
     InterCodeOperand *src2 = terminalToOperand(expr, globalTable, localTable, result);
     if (!(src2->getVarType() & SymbolType::INT_S))
     {
-        errorMsgs.push_back("Index of array must be an integer expression!");
+        addErrorMsg(result->size()-1, "Index of array must be an integer expression!");
         return;
     }
     InterCodeOperand *dst = InterCodeOperand::createTemp(src1->getVarType() & ~SymbolType::ARRAY_S, -1);
     result->add(InterCode(InterCodeOperator::IC_OFFSET, dst, src1, src2));
 }
 
+// 扫描表达式语句结点的入口
 void TreeScanner::scanExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     _scanExp_2(node->getChild(0), globalTable, localTable, result);
 }
 
+// 扫描while语句
 void TreeScanner::scanWhile_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     InterCodeOperand *dst_begin = InterCodeOperand::createLiteral("while_" + std::to_string(while_cnt) + "_begin");
@@ -346,6 +374,7 @@ void TreeScanner::scanWhile_2(ASTNode *node, SymbolTable &globalTable, SymbolTab
     result->add(InterCode(InterCodeOperator::IC_LABEL, dst_end));
 }
 
+// 扫描if-else语句块
 void TreeScanner::scanIf_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     int nChild = node->childCount();
@@ -380,6 +409,7 @@ void TreeScanner::scanIf_2(ASTNode *node, SymbolTable &globalTable, SymbolTable 
     br_cnt += 1;
 }
 
+// 扫描return语句
 void TreeScanner::scanReturn_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     if (node->childCount() == 0)
@@ -393,6 +423,7 @@ void TreeScanner::scanReturn_2(ASTNode *node, SymbolTable &globalTable, SymbolTa
     }
 }
 
+// 检查结点是否为变量名或字面量结点，如果是，返回相应的操作数对象；否则，递归调用表达式扫描函数，并将生成的中间变量返回
 InterCodeOperand *TreeScanner::terminalToOperand(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     InterCodeOperand *res = __terminalToOperand(node, localTable);
@@ -425,40 +456,73 @@ InterCodeOperand *TreeScanner::__terminalToOperand(ASTNode *node, SymbolTable &l
     return nullptr;
 }
 
+// 扫描函数调用语句。完成参数的入栈和call的操作
 void TreeScanner::scanCallExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result)
 {
     string id = node->getChild(0)->getStringValue();
-    InterCodeOperand *dst = InterCodeOperand::createVar(id, localTable.getItem(id)->getType() & ~SymbolType::FUNC_S);
     SymbolTableItem *item = globalTable.getItem(id);
     if (item == nullptr)
     {
-        errorMsgs.push_back("Function " + id + " does not exist!");
+        addErrorMsg(result->size()-1, "Function " + id + " does not exist!");
         return;
     }
+    InterCodeOperand *dst = InterCodeOperand::createVar(id, 0);
     int paraNum = item->getExtraInfo();
     ASTNode *argsNode = node->getChild(1);
-    if (paraNum != argsNode->childCount())
+    if (argsNode != nullptr)  // 如果有参数
     {
-        errorMsgs.push_back("Function " + id + " requires " + std::to_string(paraNum) + 
-            " parameters, but " + std::to_string(argsNode->childCount()) + " were given!");
-        return;
+        if (paraNum != argsNode->childCount())
+        {
+            addErrorMsg(result->size()-1, "Function " + id + " requires " + std::to_string(paraNum) + 
+                " parameters, but " + std::to_string(argsNode->childCount()) + " were given!");
+            return;
+        }
+        for (int i = paraNum - 1; i >= 0; i--)   // 倒序压参数
+        {
+            ASTNode *curChild = argsNode->getChild(i);
+            InterCodeOperand *dst_ = terminalToOperand(curChild, globalTable, localTable, result);
+            result->add(InterCode(InterCodeOperator::IC_ARG, dst_));
+        }
     }
-    for (int i = paraNum - 1; i >= 0; i--)   // 倒序压参数
-    {
-        ASTNode *curChild = argsNode->getChild(i);
-        InterCodeOperand *dst_ = terminalToOperand(curChild, globalTable, localTable, result);
-        result->add(InterCode(InterCodeOperator::IC_ARG, dst_));
-    }
+
     InterCodeOperand *src1 = InterCodeOperand::createLiteral(paraNum);
     result->add(InterCode(InterCodeOperator::IC_CALL, dst, src1));
+    InterCodeOperand::createTemp(item->getType(), -1);
 }
 
 bool TreeScanner::checkOperandType(InterCodeOperand *src1, InterCodeOperand *src2, InterCodeOperator optr)
 {
-
+    VarType type1 = src1->getVarType();
+    VarType type2 = src2->getVarType();
+    if (isArray(type1) || isArray(type2))
+        return false;
+    if (optr == InterCodeOperator::IC_ADD || optr == InterCodeOperator::IC_SUB)
+        return (isInt(type1) && isInt(type2))
+            || (isDouble(type1) && isDouble(type2))
+            || (isString(type1) && isString(type2))
+            || (isInt(type1) && isDouble(type2))
+            || (isDouble(type1) && isInt(type2));
+    if (optr == InterCodeOperator::IC_MUL || optr == InterCodeOperator::IC_DIV)
+        return (isInt(type1) && isInt(type2))
+            || (isDouble(type1) && isDouble(type2))
+            || (isInt(type1) && isDouble(type2))
+            || (isDouble(type1) && isInt(type2));
+    else
+        return (isInt(type1) && isInt(type2));
 }
 
 VarType TreeScanner::inferDstType(InterCodeOperand *src1, InterCodeOperand *src2, InterCodeOperator optr)
 {
+    VarType type1 = src1->getVarType();
+    VarType type2 = src2->getVarType();
+    if (isDouble(type1) || isDouble(type2))
+        return SymbolType::DOUBLE_S;
+    if (isString(type1) && isString(type2))
+        return SymbolType::STRING_S;
+    return SymbolType::INT_S;
+}
 
+void TreeScanner::addErrorMsg(int line, string msg)
+{
+    errorMsgs.push_back("(" + std::to_string(line) + ")" + msg);
 }
