@@ -39,7 +39,8 @@ program : function program  { $$ = new ASTNode(program, generateVector(2, $1, $2
         |                   { $$ = NULL; }
         ;
 function : FUNC type ID LP para_list RP statements ENDFUNC { $$ = (new ASTNode(function, generateVector(4, $2, $3, $5, $7)))->simplify(); }
-        ;
+         | FUNC type LB RB ID LP para_list RP statements ENDFUNC { $$ = (new ASTNode(function, generateVector(5, $2, $5, $7, $9, $3)))->simplify(); }
+         ;
 type : INT    { $$ = new ASTNode(type, generateVector(1, $1)); }
      | DOUBLE { $$ = new ASTNode(type, generateVector(1, $1)); }
      | STRING { $$ = new ASTNode(type, generateVector(1, $1)); }
@@ -57,7 +58,7 @@ declaration : type ID                   { $$ = new ASTNode(declaration, generate
             | type ID LB RB { $$ = new ASTNode(declaration, generateVector(3, $1, $2, $3)); }
             ;
 statements : statement statements { $$ = new ASTNode(statements, generateVector(2, $1, $2)); }
-           |                      { $$ = NULL; }
+           | statement            { $$ = new ASTNode(statements, generateVector(1, $1)); }
            ;
 statement : dcl_statement SEMI    { $$ = $1; }
           | if_statement          { $$ = $1; }

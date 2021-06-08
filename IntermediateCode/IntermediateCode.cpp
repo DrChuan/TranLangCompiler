@@ -1,7 +1,7 @@
 #include "IntermediateCode.h"
 
 const string InterCode::operators[] = {"add", "sub", "mul", "div", "mod", "equal", "neq", "greater", "less", "geq", "leq", 
-    "and", "or", "not", "jl", "jle", "jz", "jnz", "jmp", "label", "move", "offset", "arg", "call", "return", "func"};
+    "and", "or", "not", "jl", "jle", "jz", "jnz", "jmp", "label", "move", "offset", "arg", "call", "return", "func", "real_return"};
 
 int InterCodeOperand::tempCount = 0;
 VarType InterCodeOperand::lastVarType = 0;

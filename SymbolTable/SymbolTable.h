@@ -12,6 +12,7 @@ public:
     SymbolTable() {}
     bool insertItem(string name, SymbolTableItem item);
     SymbolTableItem *getItem(string name);
+    string getSymbol(SymbolTable *subTablePtr);
     bool deleteItem(string name);
     int getSize() const { return table.size(); }
 

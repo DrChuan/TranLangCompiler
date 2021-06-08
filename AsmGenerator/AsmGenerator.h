@@ -22,7 +22,8 @@ private:
     SymbolTable *table;    // 全局符号表
     SymbolTable *curFuncTable;    // 当前所在的函数的符号表
 
-    std::stringstream ss;   // 用于生成汇编代码字符串
+    std::stringstream ssData;   // 用于生成数据段字符串
+    std::stringstream ssText;   // 用于生成代码段字符串
 
     static const int REG_CNT = 7;
     string regs[REG_CNT] = {"rbx", "rcx", "rdx", "r10", "r11", "r12", "r13"};
@@ -30,13 +31,15 @@ private:
     int regsUseTmp[REG_CNT] = {-1, -1, -1, -1, -1, -1, -1};
 
     static int codeCnt;
-
+    void generateStartPart();
     void translateOneIC(InterCode &code);
 
     void doLabel(InterCode &code);
     void doFunc(InterCode &code);
     void doJump(InterCode &code);
     void doOffset(InterCode &code);
+    void doStringOperate(InterCode &code, string optr);
+    void doDoubleOperate(InterCode &code, string optr);
     void doIntOperate(InterCode &code, string optr);
     void doIntOperateSingle(InterCode &code, string optr);
     void doLogicOperate(InterCode &code, string optr);
@@ -51,6 +54,7 @@ private:
     void doCall(InterCode &code);
     void doArg(InterCode &code);
     void doRet(InterCode &code);
+    void doRRet(InterCode &code);
 
     void moveToReg(InterCodeOperand *oprand, string reg);
     void moveFromReg(string reg, InterCodeOperand *oprand);

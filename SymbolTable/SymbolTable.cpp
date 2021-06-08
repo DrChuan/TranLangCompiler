@@ -21,6 +21,13 @@ SymbolTableItem *SymbolTable::getItem(string name)
     return &table[name];
 }
 
+string SymbolTable::getSymbol(SymbolTable *subTablePtr)
+{
+    for (unordered_map<string, SymbolTableItem>::iterator i = table.begin(); i != table.end(); ++i)
+        if (i->second.getSubTable() == subTablePtr)
+            return i->first;
+}
+
 bool SymbolTable::deleteItem(string name)
 {
     if (table.find(name) == table.end())
