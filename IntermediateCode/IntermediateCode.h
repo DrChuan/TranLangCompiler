@@ -21,8 +21,8 @@ public:
     static InterCodeOperand *createLiteral(int i);
     static InterCodeOperand *createLiteral(double d);
     static InterCodeOperand *createLiteral(string s);
-    static InterCodeOperand *createTemp(VarType varType, int id=-1);
-    static InterCodeOperand *createVar(string varName, VarType varType);
+    static InterCodeOperand *createTemp(VarType varType, int id=-1, SymbolTable *table=nullptr);
+    static InterCodeOperand *createVar(string varName, VarType varType, SymbolTable *table);
     static int getTempCount() { return tempCount; }
     void print();
     InterCodeOperandType getType() const { return type; }
@@ -30,11 +30,13 @@ public:
     double getDoubleVal() const { return value.dval; }
     string getStringVal() const { return value.sval; }
     VarType getVarType() const { return varType; }
+    SymbolTable *getTable() const { return pTable; }
 private:
     static int tempCount;
     static VarType lastVarType;
     InterCodeOperandType type;
     VarType varType;
+    SymbolTable *pTable;
     U value;  // 若为字面量，直接保存在相应字段。
               // 若为变量名，用sval字段保存。
               // 若为中间变量，用ival字段保存编号

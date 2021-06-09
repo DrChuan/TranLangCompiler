@@ -48,12 +48,13 @@ int __do_cmp_less(int op1, int op2)
 {
     return op1 < op2;
 }
-
+#include <stdio.h>
 char *__do_str_add(char *str1, char *str2)
 {
-    char *res = allocate((strlen(str1) + strlen(str2) + 7) / 8);
+    char *res = allocate((strlen(str1) + strlen(str2) + 15) / 8);
     strcpy(res, str1);
     strcat(res, str2);
+    //printf("~~str1=%s, str2=%s, res=%s~~\n", str1, str2, res);
     return res;
 }
 
@@ -80,4 +81,32 @@ double __do_double_mul(double d1, double d2)
 double __do_double_div(double d1, double d2)
 {
     return d1 / d2;
+}
+
+int __do_cmp_str_equal(char *str1, char *str2)
+{
+    return !strcmp(str1, str2);
+}
+
+int __do_cmp_str_neq(char *str1, char *str2)
+{
+    return strcmp(str1, str2);
+}
+
+double __do_double_int_mul(long d, int i)
+{
+    double *p = (double *)(&d);
+    return *p * i;
+}
+
+double __do_double_int_div(long d, int i)
+{
+    double *p = (double *)(&d);
+    return *p / i;
+}
+
+double __do_double_int_add(long d, int i)
+{
+    double *p = (double *)(&d);
+    return *p + i;
 }

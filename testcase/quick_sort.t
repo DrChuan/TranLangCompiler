@@ -1,4 +1,4 @@
-func void quick_sort(int array, int left, int right)
+func void quick_sort(int []array, int left, int right)
 	if (left >= right)
 		return;
 	endif
@@ -6,7 +6,7 @@ func void quick_sort(int array, int left, int right)
 	int i := left;
     int j := right;
 	while (i < j)
-		while (array[j] > base && i < j)
+		while (array[j] >= base && i < j)
 			j = j - 1;
 		endwhile
 		if (i < j)
@@ -30,8 +30,9 @@ endfunc
 func int main()
 	int N;
 	int i;
+
 	N = readInt();
-	int array[100001];
+	int array[] := allocate(N);
 	i = 0;
 	while (i < N)
 		array[i] = readInt();
@@ -40,7 +41,9 @@ func int main()
 	quick_sort(array, 0, N - 1);
 	i = 0;
 	while (i < N)
-		printInt(array[i]);
+		printInt(array[i], 0);
+		printString("\n");
+		i = i + 1;
 	endwhile
 	return 0;
 endfunc

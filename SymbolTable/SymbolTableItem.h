@@ -19,14 +19,15 @@ class SymbolTableItem
 {
 public:
     SymbolTableItem() {}
-    SymbolTableItem(int _offset, int _type, SymbolTable *_tbPointer=nullptr) : offset(_offset), type(_type), tbPointer(_tbPointer) {}
+    SymbolTableItem(int _offset, int _type, SymbolTable *_tbPointer=nullptr) : offset(_offset), type(_type), refName(""), tbPointer(_tbPointer) {}
     SymbolTableItem(int _offset, int _type, string _refName, SymbolTable *_tbPointer=nullptr) : offset(_offset), type(_type), refName(_refName), tbPointer(_tbPointer) {}
-    SymbolTableItem(int _offset, int _type, int _extraInfo, SymbolTable *_tbPointer=nullptr) : offset(_offset), type(_type), extraInfo(_extraInfo), tbPointer(_tbPointer) {}
+    SymbolTableItem(int _offset, int _type, int _extraInfo, SymbolTable *_tbPointer=nullptr) : offset(_offset), type(_type), refName(""), extraInfo(_extraInfo), tbPointer(_tbPointer) {}
     void print();
     SymbolTable *getSubTable() const;
     int getExtraInfo() const { return extraInfo; }
     int getOffset() const { return offset; }
     int getType() const { return type; }
+    void setSubTable(SymbolTable *table) { tbPointer = table; }
 
 private:
     int offset;

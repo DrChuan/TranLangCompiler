@@ -20,6 +20,8 @@ private:
     TreeScanner() {}
     static TreeScanner *scanner;
 
+    SymbolTable *lastTable;
+    SymbolTable *table;
     int while_cnt;
     int br_cnt;
 
@@ -42,6 +44,7 @@ private:
     void scanStmts_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
     void scanDecl_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
     void _scanExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
+    void scanDotExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
     void scanAssignExp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
     void scan1Exp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);
     void scan2Exp_2(ASTNode *node, SymbolTable &globalTable, SymbolTable &localTable, InterCodeList *result);

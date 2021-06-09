@@ -2,11 +2,10 @@
 
 const string ASTNode::non_terminals[] = {"start", "program", "function", "type", "para_list", "para", "declaration", "statements", "statement", "dcl_statement", 
                             "if_statement", "loop_statement", "exp_statement", "initialize", "exp", "while_loop", "else_part", "literal", 
-                            "return_statement", "func_call", "args", "lexp", "class_def", "class_items", "class_item", "access", "ctor_def"};
+                            "return_statement", "func_call", "args", "lexp", "class_def", "class_items", "class_item"};
 const string ASTNode::terminals[] = {"FUNC", "ENDFUNC", "ID", "INT", "DOUBLE", "STRING", "VOID", "EPSILON", "SEMI", "INIT", "IF", "ENDIF", "ELSE", "ELSIF", 
-                        "WHILE", "ENDWHILE", "INT_LITERAL", "DOUBLE_LITERAL", "STRING_LITERAL", "RETURN", "CLASS", "ENDCLASS", "PRIVATE", 
-                        "PUBLIC", "PROTECTED", "INHERIT", "THIS", "CTOR", "ENDCTOR", "COMMA", "ASSIGN", "AND", "OR", "EQUAL", "NEQ", "GEQ", 
-                        "LEQ", "GREATER", "LESS", "ADD", "SUB", "MUL", "DIV", "MOD", "NOT", "LP", "RP", "LB", "RB"};
+                        "WHILE", "ENDWHILE", "INT_LITERAL", "DOUBLE_LITERAL", "STRING_LITERAL", "RETURN", "CLASS", "ENDCLASS", "COMMA", "ASSIGN", "AND", "OR", "EQUAL", "NEQ", "GEQ", 
+                        "LEQ", "GREATER", "LESS", "ADD", "SUB", "MUL", "DIV", "MOD", "NOT", "LP", "RP", "LB", "RB", "DOT"};
 
 ASTNode::ASTNode(int symbol) : m_children(vector<ASTNode*>(0)) { this->symbol = symbol; val.type = NOTHING; }
 
@@ -106,7 +105,7 @@ ASTNode *ASTNode::simplify()
     {
         ASTNode *t = m_children[i];
         if (!t) continue;
-        if (t->symbol == program || t->symbol == statements || t->symbol == para_list || t->symbol == args)
+        if (t->symbol == program || t->symbol == statements || t->symbol == para_list || t->symbol == args || t->symbol == class_items)
             t->merge();
         else if (t->symbol == if_statement)
             t->mergeIf();

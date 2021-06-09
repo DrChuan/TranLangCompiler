@@ -26,14 +26,14 @@ int main(int argc, char **argv)
         return 0;
     printf("Parsing success!\n");
     // 打印语法树
-    //tree.printDirectory();
+    tree.printDirectory();
     // 扫描语法树生成符号表
     SymbolTable *symbolTable = TreeScanner::getScanner().firstScan(tree);
     symbolTable->print();
     // 扫描语法树生成中间代码
     InterCodeList *interCodeList = TreeScanner::getScanner().secondScan(tree, *symbolTable);
     interCodeList->print();
-    //tree.printDirectory();
+    tree.printDirectory();
     // 打印语法树扫描过程中的错误信息
     if (TreeScanner::getScanner().hasError())
         TreeScanner::getScanner().printErrors();

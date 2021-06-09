@@ -41,6 +41,7 @@ extern "C"
 \&\& { letters += yyleng; yylval.node = new ASTNode(AND); return AND; }
 \|\| { letters += yyleng; yylval.node = new ASTNode(OR); return OR; }
 \!   { letters += yyleng; yylval.node = new ASTNode(NOT); return NOT; }
+\.   { letters += yyleng; yylval.node = new ASTNode(DOT); return DOT; }
 func      { letters += yyleng; yylval.node = new ASTNode(FUNC); return FUNC; }
 endfunc   { letters += yyleng; yylval.node = new ASTNode(ENDFUNC); return ENDFUNC; }
 if        { letters += yyleng; yylval.node = new ASTNode(IF); return IF; }
@@ -56,13 +57,6 @@ void      { letters += yyleng; yylval.node = new ASTNode(VOID); return VOID; }
 return    { letters += yyleng; yylval.node = new ASTNode(RETURN); return RETURN; }
 class     { letters += yyleng; yylval.node = new ASTNode(CLASS); return CLASS; }
 endclass  { letters += yyleng; yylval.node = new ASTNode(ENDCLASS); return ENDCLASS; }
-private   { letters += yyleng; yylval.node = new ASTNode(PRIVATE); return PRIVATE; }
-protected { letters += yyleng; yylval.node = new ASTNode(PROTECTED); return PROTECTED; }
-public    { letters += yyleng; yylval.node = new ASTNode(PUBLIC); return PUBLIC; }
-this      { letters += yyleng; yylval.node = new ASTNode(THIS); return THIS; }
-ctor      { letters += yyleng; yylval.node = new ASTNode(CTOR); return CTOR; }
-endctor   { letters += yyleng; yylval.node = new ASTNode(ENDCTOR); return ENDCTOR; }
-\<\<\<    { letters += yyleng; yylval.node = new ASTNode(INHERIT); return INHERIT; }
 -?[0-9]+                 { letters += yyleng; yylval.node = new ASTNode(INT_LITERAL, atoi(yytext), vector<ASTNode*>(0)); return INT_LITERAL; }
 -?[0-9]+(\.[0-9]+)?      { letters += yyleng; yylval.node = new ASTNode(DOUBLE_LITERAL, atof(yytext), vector<ASTNode*>(0)); return DOUBLE_LITERAL; }
 \".*\"                   { letters += yyleng; yylval.node = new ASTNode(STRING_LITERAL, strdup(yytext), vector<ASTNode*>(0)); return STRING_LITERAL; }

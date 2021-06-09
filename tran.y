@@ -21,8 +21,8 @@ extern "C"
 %}
 
 
-%type<node> start program function type para_list para declaration statements statement dcl_statement if_statement loop_statement exp_statement initialize exp while_loop else_part literal return_statement func_call args lexp class_def class_items class_item access_lv ctor_def
-%token<node> FUNC ENDFUNC ID INT DOUBLE STRING VOID EPSILON SEMI INIT IF ENDIF ELSE ELSIF WHILE ENDWHILE INT_LITERAL DOUBLE_LITERAL STRING_LITERAL RETURN CLASS ENDCLASS PRIVATE PUBLIC PROTECTED INHERIT THIS CTOR ENDCTOR
+%type<node> start program function type para_list para declaration statements statement dcl_statement if_statement loop_statement exp_statement initialize exp while_loop else_part literal return_statement func_call args lexp class_def class_items class_item
+%token<node> FUNC ENDFUNC ID INT DOUBLE STRING VOID EPSILON SEMI INIT IF ENDIF ELSE ELSIF WHILE ENDWHILE INT_LITERAL DOUBLE_LITERAL STRING_LITERAL RETURN CLASS ENDCLASS
 %left<node> COMMA
 %right<node> ASSIGN
 %left<node> AND OR
@@ -30,7 +30,7 @@ extern "C"
 %left<node> ADD SUB
 %left<node> MUL DIV MOD
 %right<node> NOT
-%left<node> LP RP LB RB
+%left<node> LP RP LB RB DOT
 
 %%
 start : program { $$ = (new ASTNode(start, generateVector(1, $1)))->simplify(); tree = AST($$); };
@@ -73,6 +73,7 @@ initialize : INIT exp { $$ = new ASTNode(initialize, generateVector(1, $2)); }
            ;
 lexp : ID           { $$ = new ASTNode(lexp, generateVector(1, $1)); }
      | ID LB exp RB { $$ = new ASTNode(lexp, generateVector(2, $1, $3)); }
+     | exp DOT ID   { $$ = new ASTNode(lexp, generateVector(3, $1, $2, $3)); }
      ;
 exp : lexp ASSIGN exp { $$ = new ASTNode(exp, generateVector(3, $1, $2, $3)); }
     | exp ADD exp     { $$ = new ASTNode(exp, generateVector(3, $1, $2, $3)); }
@@ -118,19 +119,10 @@ exp_statement : exp { $$ = new ASTNode(exp_statement, generateVector(1, $1)); }
 return_statement : RETURN exp { $$ = new ASTNode(return_statement, generateVector(1, $2)); }
                  | RETURN     { $$ = new ASTNode(return_statement, generateVector(0)); }
                  ;
-class_def : CLASS ID class_items ENDCLASS { $$ = new ASTNode(class_def, generateVector(2, $2, $3)); }
-          | CLASS ID INHERIT ID class_items ENDCLASS { $$ = new ASTNode(class_def, generateVector(4, $2, $3, $4, $5)); }
+class_def : CLASS ID class_items ENDCLASS { $$ = (new ASTNode(class_def, generateVector(2, $2, $3)))->simplify(); }
           ;
 class_items : class_item class_items { $$ = new ASTNode(class_items, generateVector(2, $1, $2)); }
             |                        { $$ = NULL; }
             ;
-class_item : access_lv declaration SEMI { $$ = new ASTNode(class_item, generateVector(2, $1, $2)); }
-           | access_lv function { $$ = new ASTNode(class_item, generateVector(2, $1, $2)); }
-           | access_lv ctor_def { $$ = new ASTNode(class_item, generateVector(2, $1, $2)); }
+class_item : dcl_statement SEMI { $$ = $1; }
            ;
-access_lv : PUBLIC { $$ = new ASTNode(access_lv, generateVector(1, $1)); }
-          | PRIVATE { $$ = new ASTNode(access_lv, generateVector(1, $1)); }
-          | PROTECTED { $$ = new ASTNode(access_lv, generateVector(1, $1)); }
-          ;
-ctor_def : CTOR LP para_list RP statements ENDCTOR { $$ = (new ASTNode(ctor_def, generateVector(2, $3, $5)))->simplify(); }
-         ;

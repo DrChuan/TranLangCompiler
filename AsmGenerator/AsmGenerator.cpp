@@ -188,6 +188,29 @@ void AsmGenerator::doStringOperate(InterCode &code, string optr)
     }
 }
 
+void AsmGenerator::doDoubleIntOperate(InterCode &code, string optr)
+{
+    InterCodeOperand *src1 = code.src1;
+    InterCodeOperand *src2 = code.src2;
+    InterCodeOperand *dst = code.dst;
+
+    moveToReg(src1, "rdi");    // 将第一个操作数移入该寄存器
+    moveToReg(src2, "rsi");    // 将第二个操作数移入该寄存器
+    // ssText << "    movq %rdi, %xmm0\n";
+    // ssText << "    movq %rsi, %rdi\n";
+    ssText << "    call __do_double_int_" << optr << "\n";
+    ssText << "    movq %xmm0, %rax\n";
+
+    if (dst->getType() == InterCodeOperandType::ORI_ID)
+        moveFromReg("rax", dst);
+    else
+    {
+        string reg = getReg();
+        setRegUse(reg, dst->getIntVal());
+        moveFromReg("rax", "%" + reg);
+    }
+}
+
 void AsmGenerator::doDoubleOperate(InterCode &code, string optr)
 {
     InterCodeOperand *src1 = code.src1;
@@ -276,7 +299,7 @@ void AsmGenerator::doCmpOperate(InterCode &code, string optr)
 
     moveToReg(src1, "rdi");    // 将第一个操作数移入该寄存器
     moveToReg(src2, "rsi");    // 将第二个操作数移入该寄存器
-    ssText << "    call __do_cmp_" << optr << "\n";
+    ssText << "    call __do_cmp_" << (isString(code.src1->getVarType()) ? "str_" : "") << optr << "\n";
 
     if (dst->getType() == InterCodeOperandType::ORI_ID)
         moveFromReg("rax", dst);
@@ -319,6 +342,10 @@ void AsmGenerator::doAdd(InterCode &code)
     {
         doDoubleOperate(code, "add");
     }
+    else if (isDouble(type1) && isInt(type2))
+    {
+        doDoubleIntOperate(code, "add");
+    }
     
 }
 
@@ -357,6 +384,10 @@ void AsmGenerator::doMulDiv(InterCode &code)
     else if (isDouble(type1) && isDouble(type2))
     {
         doDoubleOperate(code, code.optr == InterCodeOperator::IC_MUL ? "mul" : "div");
+    }
+    else if (isDouble(type1) && isInt(type2))
+    {
+        doDoubleIntOperate(code, code.optr == InterCodeOperator::IC_MUL ? "mul" : "div");
     }
 }
 
@@ -437,7 +468,7 @@ void AsmGenerator::doMove(InterCode &code)
 
 bool isLibFunc(string funcName)
 {
-    static string list[] = {"printInt", "printDouble", "allocate", "readInt", "printString", "readString", "readLine", "readDouble"};
+    static string list[] = {"printInt", "printDouble", "allocate", "readInt", "printString", "readString", "readLine", "readDouble", "readChar", "stringAt"};
     for (int i = 0; i < sizeof(list) / sizeof(string); i++)
         if (list[i] == funcName)
             return true;

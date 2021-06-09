@@ -21,13 +21,20 @@ void printInt(int i, int width)
     printf("%*d", width, i);
 }
 
-void printDouble(double d, int afterPoint)
+void printDouble(long d, int afterPoint)
 {
-    asm("movq %rdi, %xmm0\n\t"
-	"movq %rsi, %rdi\n\t"
-	"movsd %xmm0, -8(%rbp)\n\t"
-	"movl %edi, -12(%rbp)");
-    printf("%.*lf", afterPoint, d);
+    double *p = (double *)(&d);
+    double dd = *p;
+    
+    // asm("movq %rdi, %xmm0\n\t"
+	// "movq %rsi, %rdi\n\t"
+	// "movsd %xmm0, -8(%rbp)\n\t"
+	// "movl %edi, -12(%rbp)");
+    //printf("%.*lf", afterPoint, dd);
+    // int k = (int)(dd * 100) % 10;
+    int i = (int)(dd * 10 + 0.5) % 10;
+    int j = (int)(dd + 0.05);
+    printf("%d.%d", j, i);
 }
 
 int readInt()
@@ -71,3 +78,16 @@ char *readLine()
     return read_buf;
 }
 
+char *readChar()
+{
+    char *buf = (char *)allocate(1);
+    buf[0] = getchar();
+    return buf;
+}
+
+char *stringAt(char *str, int idx)
+{
+    char *buf = (char *)allocate(1);
+    buf[0] = str[idx];
+    return buf;
+}

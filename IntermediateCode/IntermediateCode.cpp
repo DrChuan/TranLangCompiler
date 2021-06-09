@@ -56,10 +56,11 @@ InterCodeOperand *InterCodeOperand::createLiteral(string s)
 }
 
 // id=0: 以最后一个中间变量创建操作数   id=1: 创建新的中间变量作为操作数
-InterCodeOperand *InterCodeOperand::createTemp(VarType varType, int id)
+InterCodeOperand *InterCodeOperand::createTemp(VarType varType, int id, SymbolTable *table)
 {
     InterCodeOperand *ret = new InterCodeOperand();
     ret->type = InterCodeOperandType::TEMP;
+    ret->pTable = table;
     if (id == 0)
     {
         ret->value.ival = tempCount - 1;
@@ -80,9 +81,10 @@ InterCodeOperand *InterCodeOperand::createTemp(VarType varType, int id)
     return ret;
 }
 
-InterCodeOperand *InterCodeOperand::createVar(string varName, VarType varType)
+InterCodeOperand *InterCodeOperand::createVar(string varName, VarType varType, SymbolTable *table)
 {
     InterCodeOperand *ret = new InterCodeOperand();
+    ret->pTable = table;
     ret->type = InterCodeOperandType::ORI_ID;
     ret->value.sval = varName;
     ret->varType = varType;

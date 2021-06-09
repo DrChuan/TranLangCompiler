@@ -39,6 +39,7 @@ private:
     void doJump(InterCode &code);
     void doOffset(InterCode &code);
     void doStringOperate(InterCode &code, string optr);
+    void doDoubleIntOperate(InterCode &code, string optr);
     void doDoubleOperate(InterCode &code, string optr);
     void doIntOperate(InterCode &code, string optr);
     void doIntOperateSingle(InterCode &code, string optr);
